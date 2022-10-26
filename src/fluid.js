@@ -14,6 +14,7 @@ class Fluid {
   #countToDrop = 0;
   #color;
   #fps;
+  #fillTime;
   #fillSpeed;
   #initWaveHeight;
   #rippleSpeed;
@@ -22,7 +23,7 @@ class Fluid {
     this.#ctx = kernelOption.context;
     this.#color = kernelOption.color;
     this.#fps = kernelOption.fps;
-    this.#fillSpeed = kernelOption.startPosY / ((userOption.fillTime / 1000) * this.#fps); // prettier-ignore
+    this.#fillTime = userOption.fillTime;
     this.#initWaveHeight = userOption.waveHeight;
     this.#rippleSpeed = userOption.rippleSpeed;
 
@@ -42,6 +43,7 @@ class Fluid {
     this.#stageSize = stageSize;
     this.#vertexes = [];
     this.#vertexInterval = stageSize.width / Fluid.VERTEX_COUNT;
+    this.#fillSpeed = startPosY / ((this.#fillTime / 1000) * this.#fps); // prettier-ignore
 
     for (let i = 0; i < Fluid.VERTEX_COUNT; i++) {
       this.#vertexes.push(
