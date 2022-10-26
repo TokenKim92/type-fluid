@@ -23,14 +23,17 @@ class TextFrame {
 
     const textFields = [];
     if (this.#calculateLineCount(stageRect) === 1) {
-      this.#drawTextFrame(stageRect, this.#text);
+      const baseLinePos = this.#drawTextFrame(stageRect, this.#text);
+      this.#baseLinePos.push(baseLinePos);
       this.#getTextFields(this.#text).forEach((textField) =>
         textFields.push(textField)
       );
     } else {
       const textList = this.#getTextList(stageRect);
+      let baseLinePos;
       textList.forEach((lineText, index) => {
-        this.#drawTextFrame(stageRect, lineText, index);
+        baseLinePos = this.#drawTextFrame(stageRect, lineText, index);
+        this.#baseLinePos.push(baseLinePos);
         this.#getTextFields(lineText, index).forEach((textField) =>
           textFields.push(textField)
         );
@@ -42,6 +45,25 @@ class TextFrame {
     this.#ctx.restore();
 
     return pixelPositions;
+  };
+
+  drawText = (stageRect) => {
+    this.#ctx.save();
+
+    this.#ctx.font = `${this.#rootStyle.fontWeight} ${this.#rootStyle.fontSize} ${this.#rootStyle.fontFamily}`; //prettier-ignore
+    this.#ctx.fillStyle = this.#rootStyle.color;
+    this.#ctx.textBaseline = 'middle';
+
+    if (this.#calculateLineCount(stageRect) === 1) {
+      this.#drawTextFrame(stageRect, this.#text);
+    } else {
+      const textList = this.#getTextList(stageRect);
+      textList.forEach((lineText, index) =>
+        this.#drawTextFrame(stageRect, lineText, index)
+      );
+    }
+
+    this.#ctx.restore();
   };
 
   #getTextList = (stageRect) => {
@@ -79,9 +101,10 @@ class TextFrame {
       totalTextMetrics,
       index
     );
-    this.#baseLinePos.push(baseLinePos);
 
     this.#ctx.fillText(text, baseLinePos.x, baseLinePos.y);
+
+    return baseLinePos;
   };
 
   #getTextFields = (text, index = 0) => {

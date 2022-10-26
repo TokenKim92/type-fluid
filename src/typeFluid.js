@@ -281,7 +281,10 @@ class TypeFluid {
       this.#curFillCount++;
     }, TypeFluid.FPS_TIME);
 
-    this.#stopFillTimer = () => clearInterval(intervalId);
+    this.#stopFillTimer = () => {
+      clearInterval(intervalId);
+      this.#textFrame.drawText(this.#stageSize);
+    };
   };
 
   #fillText = () => {
