@@ -1,11 +1,7 @@
 import TypeFluid from '../src/typeFluid.js';
 
-const type = new TypeFluid('type', 5000, {
+const type = new TypeFluid('type', 50000, {
   waveHeight: 1,
-  rippleSpeed: 3,
+  rippleSpeed: 5,
 });
 type.start();
-
-setTimeout(() => {
-  type.restart();
-}, 6000);

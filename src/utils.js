@@ -102,3 +102,6 @@ export const parseIntForPadding = (stylePadding) => {
 export const parseIntForMargin = (styleMargin) => {
   return parseIntForStyle(styleMargin);
 };
+
+export const DIGIT_OFFSET = 100;
+export const MS_TO_S_OFFSET = 1000;

@@ -14,7 +14,7 @@ class TypeFluid {
   static FPS_TIME = 1000 / TypeFluid.FPS;
   static OPACITY_TRANSITION_TIME = 300;
   static INIT_WAVE_HEIGHT = 1;
-  static INIT_RIPPLE_SPEED = 1;
+  static INIT_RIPPLE_SPEED = 5;
 
   #canvas;
   #ctx;
@@ -56,6 +56,15 @@ class TypeFluid {
     );
 
     window.addEventListener('resize', this.#resize);
+
+    const arr1 = new Uint8Array(2);
+    arr1[0] = 0;
+    arr1[1] = 1;
+    const arr2 = new Uint8Array(2);
+    arr2[0] = 0;
+    arr2[1] = 3;
+
+    console.log(arr1 | arr2);
   }
 
   start = () => {
@@ -97,10 +106,8 @@ class TypeFluid {
   }
 
   #initAttributes = (initAttributes) => {
-    const waveHeightOffset = 1000;
-    const rippleSpeedOffset = 0.1;
-    this.#waveHeight = TypeFluid.INIT_WAVE_HEIGHT * waveHeightOffset;
-    this.#rippleSpeed = TypeFluid.INIT_RIPPLE_SPEED * rippleSpeedOffset;
+    this.#waveHeight = TypeFluid.INIT_WAVE_HEIGHT;
+    this.#rippleSpeed = TypeFluid.INIT_RIPPLE_SPEED;
 
     if (initAttributes === undefined) {
       return;
@@ -113,17 +120,17 @@ class TypeFluid {
         throw new Error("'waveHeight' should be between 1 and 5.");
       }
 
-      this.#waveHeight = initAttributes.waveHeight * waveHeightOffset;
+      this.#waveHeight = initAttributes.waveHeight;
     }
 
     if (initAttributes.rippleSpeed !== undefined) {
       checkType(initAttributes.rippleSpeed, primitiveType.number);
 
-      if (initAttributes.rippleSpeed <= 0 || initAttributes.rippleSpeed > 5) {
+      if (initAttributes.rippleSpeed <= 0 || initAttributes.rippleSpeed > 10) {
         throw new Error("'rippleSpeed' should be between 1 and 5.");
       }
 
-      this.#rippleSpeed = initAttributes.rippleSpeed * rippleSpeedOffset;
+      this.#rippleSpeed = initAttributes.rippleSpeed;
     }
   };
 
@@ -277,7 +284,8 @@ class TypeFluid {
       }
 
       this.#fluid.update();
-      this.#fillText();
+      this.#fluid.draw();
+      //this.#fillText();
       this.#curFillCount++;
     }, TypeFluid.FPS_TIME);
 

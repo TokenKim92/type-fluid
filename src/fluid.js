@@ -1,31 +1,32 @@
 import Vertex from './vertex.js';
+import { DIGIT_OFFSET, MS_TO_S_OFFSET } from './utils.js';
 
 class Fluid {
-  static VERTEX_COUNT = 500;
-  static MIN_WAVE_HEIGHT = 15;
-  static START_POS_OFFSET = 5;
+  static MAX_EFFECT_RANGE = 15;
+  static MAX_EFFECT_RANGE_OFFSET = 45;
+  static WAVE_STEP = 3;
 
   #stageSize;
   #ctx;
+  #vertexCount;
   #vertexes = [];
   #dropPosX;
   #droppedVertexIndex;
-  #vertexInterval;
   #countToDrop = 0;
   #color;
   #fps;
   #fillTime;
   #fillSpeed;
   #initWaveHeight;
-  #rippleSpeed;
 
   constructor(kernelOption, userOption) {
     this.#ctx = kernelOption.context;
     this.#color = kernelOption.color;
     this.#fps = kernelOption.fps;
     this.#fillTime = userOption.fillTime;
-    this.#initWaveHeight = userOption.waveHeight;
-    this.#rippleSpeed = userOption.rippleSpeed;
+
+    const WAVE_HEIGHT_OFFSET = 500;
+    this.#initWaveHeight = userOption.waveHeight * WAVE_HEIGHT_OFFSET * DIGIT_OFFSET; // prettier-ignore
 
     this.resize(kernelOption.stageSize, kernelOption.startPosY);
     this.#drop();
@@ -39,15 +40,20 @@ class Fluid {
     this.#drop();
   };
 
-  resize = (stageSize, startPosY) => {
-    this.#stageSize = stageSize;
-    this.#vertexes = [];
-    this.#vertexInterval = stageSize.width / Fluid.VERTEX_COUNT;
-    this.#fillSpeed = startPosY / ((this.#fillTime / 1000) * this.#fps); // prettier-ignore
+  resize = (stageSize, bottomPos) => {
+    const VERTEX_INTERVAL = 10;
+    const START_POS_OFFSET = 5;
 
-    for (let i = 0; i < Fluid.VERTEX_COUNT; i++) {
+    this.#stageSize = stageSize;
+    this.#vertexCount = Math.ceil(stageSize.width / (VERTEX_INTERVAL - 2));
+    this.#vertexes = [];
+    this.#fillSpeed = ((bottomPos / ((this.#fillTime / MS_TO_S_OFFSET) * this.#fps)) * DIGIT_OFFSET) | 0; // prettier-ignore
+
+    const startPoxX = VERTEX_INTERVAL / 2;
+    const startPosY = (bottomPos + START_POS_OFFSET) * DIGIT_OFFSET;
+    for (let i = 0; i < this.#vertexCount; i++) {
       this.#vertexes.push(
-        new Vertex(this.#vertexInterval * i, startPosY + Fluid.START_POS_OFFSET)
+        new Vertex(VERTEX_INTERVAL * i - startPoxX, startPosY, this.#fillSpeed)
       );
     }
   };
@@ -56,69 +62,79 @@ class Fluid {
     this.#countToDrop = (this.#countToDrop + 1) % this.#fps;
     this.#countToDrop || this.#drop();
 
-    this.#vertexes.forEach((vertex) => {
-      vertex.baseY -= this.#fillSpeed;
-    });
-    this.#vertexes[this.#droppedVertexIndex].targetWaveHeight *=
-      this.#rippleSpeed;
+    const curVertex = this.#vertexes[this.#droppedVertexIndex];
+    curVertex.targetWaveHeight =
+      (curVertex.targetWaveHeight / Fluid.WAVE_STEP) | 0;
 
     this.#setWaveHeightLeftSide();
     this.#setWaveHeightLRightSide();
 
-    for (let i = 0; i < this.#vertexes.length; i++) {
-      this.#vertexes[i].update();
-    }
-
-    this.#draw();
+    this.#vertexes.forEach((vertex) => vertex.update());
   };
 
   #setWaveHeightLeftSide = () => {
-    let waveHeight;
+    let effectIndex = 0;
+    let effectRatio;
+    let curVertex;
+    let prevVertex = this.#vertexes[this.#droppedVertexIndex];
 
     for (let i = this.#droppedVertexIndex - 1; i > 0; i--) {
-      waveHeight = this.#droppedVertexIndex - i;
-      waveHeight > Fluid.MIN_WAVE_HEIGHT &&
-        (waveHeight = Fluid.MIN_WAVE_HEIGHT);
-      this.#vertexes[i].targetWaveHeight -=
-        (this.#vertexes[i].targetWaveHeight -
-          this.#vertexes[i + 1].targetWaveHeight) *
-        (1 - 0.01 * waveHeight);
+      curVertex = this.#vertexes[i];
+      effectRatio =
+        effectIndex++ > Fluid.MAX_EFFECT_RANGE
+          ? Fluid.MAX_EFFECT_RANGE / Fluid.MAX_EFFECT_RANGE_OFFSET
+          : effectIndex / Fluid.MAX_EFFECT_RANGE_OFFSET;
+
+      curVertex.targetWaveHeight =
+        (effectRatio * curVertex.targetWaveHeight + (1 - effectRatio) * prevVertex.targetWaveHeight) | 0; // prettier-ignore
+
+      prevVertex = curVertex;
     }
   };
 
   #setWaveHeightLRightSide = () => {
-    let waveHeight;
+    let effectIndex = 0;
+    let effectRatio;
+    let curVertex;
+    let prevVertex = this.#vertexes[this.#droppedVertexIndex];
 
-    for (let i = this.#droppedVertexIndex + 1; i < Fluid.VERTEX_COUNT; i++) {
-      waveHeight = i - this.#droppedVertexIndex;
-      if (waveHeight > Fluid.MIN_WAVE_HEIGHT)
-        waveHeight = Fluid.MIN_WAVE_HEIGHT;
-      this.#vertexes[i].targetWaveHeight -=
-        (this.#vertexes[i].targetWaveHeight -
-          this.#vertexes[i - 1].targetWaveHeight) *
-        (1 - 0.01 * waveHeight);
+    for (let i = this.#droppedVertexIndex + 1; i < this.#vertexCount; i++) {
+      curVertex = this.#vertexes[i];
+      effectRatio =
+        effectIndex++ > Fluid.MAX_EFFECT_RANGE
+          ? Fluid.MAX_EFFECT_RANGE / Fluid.MAX_EFFECT_RANGE_OFFSET
+          : effectIndex / Fluid.MAX_EFFECT_RANGE_OFFSET;
+
+      curVertex.targetWaveHeight =
+        (effectRatio * curVertex.targetWaveHeight + (1 - effectRatio) * prevVertex.targetWaveHeight) | 0; // prettier-ignore
+
+      prevVertex = curVertex;
     }
   };
 
   #drop = () => {
-    this.#dropPosX = Math.random() * this.#stageSize.width;
-    this.#droppedVertexIndex = Math.floor(
-      Fluid.VERTEX_COUNT * (this.#dropPosX / this.#stageSize.width)
-    );
+    this.#dropPosX = this.#stageSize.width / 2;
+    Math.random() * this.#stageSize.width;
+    this.#droppedVertexIndex =
+      (this.#vertexCount * (this.#dropPosX / this.#stageSize.width)) | 0;
 
     this.#vertexes[this.#droppedVertexIndex].targetWaveHeight =
       this.#initWaveHeight;
   };
 
-  #draw = () => {
+  draw = () => {
     this.#ctx.save();
+
     this.#ctx.fillStyle = this.#color;
     this.#ctx.clearRect(0, 0, this.#stageSize.width, this.#stageSize.height);
 
     this.#ctx.beginPath();
-    this.#ctx.moveTo(0, window.innerHeight);
-    this.#vertexes.forEach((vertex) => this.#ctx.lineTo(vertex.x, vertex.y));
-    this.#ctx.lineTo(this.#stageSize.width, window.innerHeight);
+
+    this.#ctx.moveTo(0, this.#stageSize.height);
+    this.#vertexes.forEach((vertex) => {
+      this.#ctx.lineTo(vertex.x, vertex.y / DIGIT_OFFSET);
+    });
+    this.#ctx.lineTo(this.#stageSize.width, this.#stageSize.height);
     this.#ctx.fill();
 
     this.#ctx.restore();
