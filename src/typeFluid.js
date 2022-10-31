@@ -8,10 +8,12 @@ import {
 } from './utils.js';
 
 import Fluid from './fluid.js';
+import WaterDropEffect from './waterDropEffect.js';
 
 class TypeFluid {
   static FPS = 60;
   static FPS_TIME = 1000 / TypeFluid.FPS;
+  static COUNT_TO_DROP = TypeFluid.FPS / 2;
   static OPACITY_TRANSITION_TIME = 300;
   static INIT_WAVE_HEIGHT = 1;
   static INIT_RIPPLE_SPEED = 5;
@@ -40,6 +42,10 @@ class TypeFluid {
   #waveHeight;
   #rippleSpeed;
 
+  #waterDropEffect;
+  #countToDrop = TypeFluid.COUNT_TO_DROP - 1;
+  #waterDrops = [];
+
   constructor(elementId, fillTime = 1000, initAttributes = undefined) {
     this.#typeCheck(elementId, fillTime);
     this.#initAttributes(initAttributes);
@@ -56,15 +62,6 @@ class TypeFluid {
     );
 
     window.addEventListener('resize', this.#resize);
-
-    const arr1 = new Uint8Array(2);
-    arr1[0] = 0;
-    arr1[1] = 1;
-    const arr2 = new Uint8Array(2);
-    arr2[0] = 0;
-    arr2[1] = 3;
-
-    console.log(arr1 | arr2);
   }
 
   start = () => {
@@ -212,6 +209,12 @@ class TypeFluid {
       }
     );
 
+    this.#waterDropEffect = new WaterDropEffect(
+      this.#ctx,
+      this.#stageSize,
+      TypeFluid.FPS
+    );
+
     this.#isInitialized = true;
   };
 
@@ -257,6 +260,8 @@ class TypeFluid {
     );
     this.#canvas.width = this.#stageSize.width;
     this.#canvas.height = this.#stageSize.height;
+
+    this.#ctx.fillStyle = this.#rootStyle.color;
   };
 
   #resetBackground = () => {
@@ -283,9 +288,30 @@ class TypeFluid {
         return;
       }
 
+      this.#countToDrop = (this.#countToDrop + 1) % TypeFluid.COUNT_TO_DROP;
+      if (!this.#countToDrop) {
+        const dropWater = this.#waterDropEffect.drop();
+        dropWater && this.#waterDrops.push(dropWater);
+      }
+
+      if (this.#waterDrops.length) {
+        const dropWater = this.#waterDrops[0];
+
+        if (this.#fluid.curHeight < dropWater.posY) {
+          this.#fluid.setDropPosX(dropWater.x);
+          this.#waterDrops.shift();
+          dropWater.reset();
+        }
+      }
+
       this.#fluid.update();
+      this.#waterDropEffect.update();
+
+      this.#ctx.clearRect(0, 0, this.#stageSize.width, this.#stageSize.height);
       this.#fluid.draw();
       //this.#fillText();
+      this.#waterDropEffect.draw();
+
       this.#curFillCount++;
     }, TypeFluid.FPS_TIME);
 
