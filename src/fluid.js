@@ -137,6 +137,10 @@ class Fluid {
   get curHeight() {
     return this.#vertexes[this.#droppedVertexIndex].y;
   }
+
+  get baseHeight() {
+    return this.#vertexes[0].baseY;
+  }
 }
 
 export default Fluid;

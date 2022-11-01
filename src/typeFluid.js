@@ -29,8 +29,6 @@ class TypeFluid {
   #textFrame;
   #backgroundSize;
   #fillTime;
-  #targetFillCount;
-  #curFillCount = 0;
   #fontRGB;
   #rootStyle;
   #isProcessing = false;
@@ -47,7 +45,6 @@ class TypeFluid {
     this.#typeCheck(elementId, fillTime);
 
     this.#fillTime = fillTime;
-    this.#targetFillCount = fillTime * TypeFluid.FPS * 1.1;
     this.#text = this.#elementObj.innerText;
     this.#rootStyle = window.getComputedStyle(this.#elementObj);
     this.#fontRGB = colorToRGB(this.#rootStyle.color);
@@ -78,7 +75,6 @@ class TypeFluid {
   restart = () => {
     this.#isProcessing && this.#stopFillTimer();
 
-    this.#curFillCount = 0;
     this.#isProcessing = true;
     this.#fluid.reset();
 
@@ -263,8 +259,11 @@ class TypeFluid {
         return;
       }
 
-      if (this.#curFillCount > this.#targetFillCount) {
+      if (this.#fluid.baseHeight < 0) {
         this.#stopFillTimer();
+        this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+        this.#textFrame.drawText();
+
         return;
       }
 
@@ -291,8 +290,6 @@ class TypeFluid {
       this.#fluid.draw();
       this.#fillText();
       this.#waterDropEffect.draw();
-
-      this.#curFillCount++;
     }, TypeFluid.FPS_TIME);
 
     this.#stopFillTimer = () => {

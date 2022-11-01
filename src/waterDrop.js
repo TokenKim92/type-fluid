@@ -1,8 +1,8 @@
 import { WEIGHT } from './utils.js';
 class WaterDrop {
-  static MIN_SIZE = 5;
-  static MAX_SIZE = 8;
-  static SIZE_OFFSET = WaterDrop.MAX_SIZE - WaterDrop.MIN_SIZE;
+  static MIN_SIZE = 2;
+  static MAX_SIZE_OFFSET = 3;
+  static MAX_SIZE = WaterDrop.MIN_SIZE + WaterDrop.MAX_SIZE_OFFSET;
   static PI2 = Math.PI * 2;
 
   #sizeOffset;
@@ -127,7 +127,7 @@ class WaterDrop {
 */
   reset = () => {
     this.#sizeOffset =
-      (Math.random() * WaterDrop.SIZE_OFFSET + WaterDrop.MIN_SIZE) | 0;
+      (Math.random() * WaterDrop.MAX_SIZE_OFFSET + WaterDrop.MIN_SIZE) | 0;
     this.#weight = this.#getWeight(this.#sizeOffset);
     this.x =
       (Math.random() * (this.#stageSize.width - this.#sizeOffset) +

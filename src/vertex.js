@@ -3,7 +3,6 @@ class Vertex {
   static EASE = 0.1;
 
   #orgY;
-  #baseY;
   #vy;
   #fillSpeed;
 
@@ -16,15 +15,15 @@ class Vertex {
   }
 
   reset = () => {
-    this.#baseY = this.#orgY;
+    this.baseY = this.#orgY;
     this.y = this.#orgY;
     this.#vy = 0;
     this.targetWaveHeight = 0;
   };
 
   update = () => {
-    this.#baseY += this.#fillSpeed;
-    this.#vy += this.targetWaveHeight + this.#baseY - this.y;
+    this.baseY += this.#fillSpeed;
+    this.#vy += this.targetWaveHeight + this.baseY - this.y;
     this.#vy = this.#vy * Vertex.FRICTION;
     this.y += this.#vy * Vertex.EASE;
   };
