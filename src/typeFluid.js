@@ -27,7 +27,6 @@ class TypeFluid {
   #text;
   #stopFillTimer;
   #textFrame;
-  #stageSize;
   #backgroundSize;
   #fillTime;
   #targetFillCount;
@@ -116,23 +115,19 @@ class TypeFluid {
   };
 
   #createCanvases = () => {
-    const padding = parseIntForPadding(this.#rootStyle.padding);
-    const margin = parseIntForMargin(this.#rootStyle.margin);
-    const toBeCreatedBackground =
-      colorToRGB(this.#rootStyle.backgroundColor).a !== 0;
-    this.#backgroundSize = this.#getClientSize(this.#elementObj);
+    const createCanvasContainer = () => {
+      this.#canvasContainer = document.createElement('div');
+      this.#canvasContainer.style.transform =
+        this.#rootStyle.display !== 'inline'
+          ? this.#rootStyle.transform
+          : 'matrix(1, 0, 0, 1, 0, 0)';
+      this.#canvasContainer.style.top = `-${
+        this.#backgroundSize.height + margin.top + margin.bottom
+      }px`;
+      this.#canvasContainer.style.position = 'relative';
+    };
 
-    this.#canvasContainer = document.createElement('div');
-    this.#canvasContainer.style.transform =
-      this.#rootStyle.display !== 'inline'
-        ? this.#rootStyle.transform
-        : 'matrix(1, 0, 0, 1, 0, 0)';
-    this.#canvasContainer.style.top = `-${
-      this.#backgroundSize.height + margin.top + margin.bottom
-    }px`;
-    this.#canvasContainer.style.position = 'relative';
-
-    if (toBeCreatedBackground) {
+    const createBackgroundCanvas = () => {
       this.#backgroundCanvas = document.createElement('canvas');
       this.#backgroundCtx = this.#backgroundCanvas.getContext('2d');
       this.#backgroundCanvas.style.cssText = `
@@ -141,15 +136,27 @@ class TypeFluid {
       `;
       this.#resetBackground();
       this.#backgroundCanvas.style.position = 'absolute';
+    };
+
+    const createCanvas = () => {
+      this.#canvas = document.createElement('canvas');
+      this.#ctx = this.#canvas.getContext('2d', { willReadFrequently: true });
+      this.#canvas.style.position = 'absolute';
+      this.#canvas.style.top = `${padding.top + margin.top}px`;
+    };
+
+    const padding = parseIntForPadding(this.#rootStyle.padding);
+    const margin = parseIntForMargin(this.#rootStyle.margin);
+    const toBeCreatedBackground =
+      colorToRGB(this.#rootStyle.backgroundColor).a !== 0;
+    this.#backgroundSize = this.#getClientSize(this.#elementObj);
+
+    createCanvasContainer();
+    if (toBeCreatedBackground) {
+      createBackgroundCanvas();
       this.#canvasContainer.append(this.#backgroundCanvas);
     }
-
-    this.#canvas = document.createElement('canvas');
-    this.#ctx = this.#canvas.getContext('2d', { willReadFrequently: true });
-    this.#canvas.style.top = `${padding.top + margin.top}px`;
-    this.#canvas.style.position = 'absolute';
-    this.#resetStage(padding, margin);
-
+    createCanvas();
     this.#canvasContainer.append(this.#canvas);
     this.#rootElement.append(this.#canvasContainer);
   };
@@ -162,18 +169,26 @@ class TypeFluid {
       this.#text,
       this.#fontRGB.a
     );
-    this.#pixelPositions = this.#textFrame.getPixelPositions(this.#stageSize);
+
+    this.#resetStage();
+
+    const stageSize = {
+      width: this.#canvas.width,
+      height: this.#canvas.height,
+    };
+    this.#pixelPositions = this.#textFrame.getPixelPositions(stageSize);
+
     this.#fluid = new Fluid({
       context: this.#ctx,
       fps: TypeFluid.FPS,
-      stageSize: this.#stageSize,
+      stageSize: stageSize,
       startPosY: this.#textFrame.bottomPos,
       fillTime: this.#fillTime,
     });
 
     this.#waterDropEffect = new WaterDropEffect(
       this.#ctx,
-      this.#stageSize,
+      stageSize,
       TypeFluid.FPS
     );
 
@@ -200,29 +215,32 @@ class TypeFluid {
       return;
     }
 
-    const padding = parseIntForPadding(this.#rootStyle.padding);
     const margin = parseIntForMargin(this.#rootStyle.margin);
     this.#canvasContainer.style.top = `-${
       newBackgroundSize.height + margin.top + margin.bottom
     }px`;
 
-    this.#resetStage(padding, margin);
-    this.#pixelPositions = this.#textFrame.getPixelPositions(this.#stageSize);
-    this.#fluid.resize(this.#stageSize, this.#textFrame.bottomPos);
+    this.#resetStage();
+    const stageSize = {
+      width: this.#canvas.width,
+      height: this.#canvas.height,
+    };
+    this.#pixelPositions = this.#textFrame.getPixelPositions(stageSize);
+    this.#fluid.resize(stageSize, this.#textFrame.bottomPos);
+    this.#waterDropEffect.resize(stageSize);
+
     this.restart();
   };
 
-  #resetStage = (padding, margin) => {
-    this.#canvas.style.left = `${padding.left + margin.left}px`;
+  #resetStage = () => {
+    const clientSize = this.#getClientSize(this.#elementObj);
+    this.#canvas.width = clientSize.width;
+    this.#canvas.height = clientSize.height;
 
-    this.#stageSize = this.#getClientSize(
-      this.#elementObj,
-      padding.left + padding.right,
-      padding.top + padding.bottom
-    );
-    this.#canvas.width = this.#stageSize.width;
-    this.#canvas.height = this.#stageSize.height;
-
+    const textFrameRect = this.#textFrame.getRect(clientSize);
+    this.#canvas.style.left = `${textFrameRect.x}px`;
+    this.#canvas.width = textFrameRect.width;
+    this.#canvas.height = textFrameRect.height;
     this.#ctx.fillStyle = this.#rootStyle.color;
   };
 
@@ -269,9 +287,9 @@ class TypeFluid {
       this.#fluid.update();
       this.#waterDropEffect.update();
 
-      this.#ctx.clearRect(0, 0, this.#stageSize.width, this.#stageSize.height);
+      this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
       this.#fluid.draw();
-      //this.#fillText();
+      this.#fillText();
       this.#waterDropEffect.draw();
 
       this.#curFillCount++;
@@ -279,7 +297,7 @@ class TypeFluid {
 
     this.#stopFillTimer = () => {
       clearInterval(intervalId);
-      this.#textFrame.drawText(this.#stageSize);
+      this.#textFrame.drawText();
     };
   };
 
@@ -287,14 +305,14 @@ class TypeFluid {
     const imageData = this.#ctx.getImageData(
       0,
       0,
-      this.#stageSize.width,
-      this.#stageSize.height
+      this.#canvas.width,
+      this.#canvas.height
     );
 
     this.#hideWave(imageData.data);
 
     this.#pixelPositions.forEach((dot) => {
-      const index = dot.x + dot.y * this.#stageSize.width;
+      const index = dot.x + dot.y * this.#canvas.width;
       this.#isPixelOnWave(imageData.data, index) &&
         this.#showPixelOnWave(imageData.data, index, dot.alpha);
     });

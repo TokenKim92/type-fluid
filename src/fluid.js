@@ -11,7 +11,7 @@ class Fluid {
   #ctx;
   #vertexCount;
   #vertexes = [];
-  #droppedVertexIndex = 0;
+  #droppedVertexIndex;
   #fps;
   #fillTime;
   #fillSpeed;
@@ -36,6 +36,7 @@ class Fluid {
   resize = (stageSize, bottomPos) => {
     const START_POS_OFFSET = 5;
 
+    this.#droppedVertexIndex = 0;
     this.#stageSize = stageSize;
     this.#vertexCount = Math.ceil(
       stageSize.width / (Fluid.VERTEX_INTERVAL - 2)
