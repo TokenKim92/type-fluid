@@ -44,10 +44,11 @@ class TypeFluid {
   #countToDrop = TypeFluid.COUNT_TO_DROP - 1;
   #waterDrops = [];
 
-  constructor(elementId, fillTime = 1000) {
+  constructor(elementId, fillTime = 5) {
     this.#typeCheck(elementId, fillTime);
+
     this.#fillTime = fillTime;
-    this.#targetFillCount = (fillTime / 1000) * TypeFluid.FPS * 1.1;
+    this.#targetFillCount = fillTime * TypeFluid.FPS * 1.1;
     this.#text = this.#elementObj.innerText;
     this.#rootStyle = window.getComputedStyle(this.#elementObj);
     this.#fontRGB = colorToRGB(this.#rootStyle.color);

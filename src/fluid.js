@@ -35,7 +35,6 @@ class Fluid {
 
   resize = (stageSize, bottomPos) => {
     const START_POS_OFFSET = 5;
-    const MS_TO_S_OFFSET = 1000;
 
     this.#stageSize = stageSize;
     this.#vertexCount = Math.ceil(
@@ -43,7 +42,7 @@ class Fluid {
     );
 
     this.#vertexes = [];
-    this.#fillSpeed = bottomPos / ((this.#fillTime / MS_TO_S_OFFSET) * this.#fps); // prettier-ignore
+    this.#fillSpeed = bottomPos / (this.#fillTime * this.#fps);
 
     const startPoxX = Fluid.VERTEX_INTERVAL / 2;
     const startPosY = bottomPos + START_POS_OFFSET;
