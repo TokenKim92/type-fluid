@@ -39,16 +39,13 @@ class TypeFluid {
   #isInitialized = false;
   #fluid;
   #pixelPositions;
-  #waveHeight;
-  #rippleSpeed;
 
   #waterDropEffect;
   #countToDrop = TypeFluid.COUNT_TO_DROP - 1;
   #waterDrops = [];
 
-  constructor(elementId, fillTime = 1000, initAttributes = undefined) {
+  constructor(elementId, fillTime = 1000) {
     this.#typeCheck(elementId, fillTime);
-    this.#initAttributes(initAttributes);
     this.#fillTime = fillTime;
     this.#targetFillCount = (fillTime / 1000) * TypeFluid.FPS * 1.1;
     this.#text = this.#elementObj.innerText;
@@ -101,35 +98,6 @@ class TypeFluid {
       throw new Error("'spreadSpeed' should be greater then 0.");
     }
   }
-
-  #initAttributes = (initAttributes) => {
-    this.#waveHeight = TypeFluid.INIT_WAVE_HEIGHT;
-    this.#rippleSpeed = TypeFluid.INIT_RIPPLE_SPEED;
-
-    if (initAttributes === undefined) {
-      return;
-    }
-
-    if (initAttributes.waveHeight !== undefined) {
-      checkType(initAttributes.waveHeight, primitiveType.number);
-
-      if (initAttributes.waveHeight <= 0 || initAttributes.waveHeight > 5) {
-        throw new Error("'waveHeight' should be between 1 and 5.");
-      }
-
-      this.#waveHeight = initAttributes.waveHeight;
-    }
-
-    if (initAttributes.rippleSpeed !== undefined) {
-      checkType(initAttributes.rippleSpeed, primitiveType.number);
-
-      if (initAttributes.rippleSpeed <= 0 || initAttributes.rippleSpeed > 10) {
-        throw new Error("'rippleSpeed' should be between 1 and 5.");
-      }
-
-      this.#rippleSpeed = initAttributes.rippleSpeed;
-    }
-  };
 
   #createRootElement = () => {
     this.#rootElement = document.createElement('div');
@@ -194,20 +162,13 @@ class TypeFluid {
       this.#fontRGB.a
     );
     this.#pixelPositions = this.#textFrame.getPixelPositions(this.#stageSize);
-    this.#fluid = new Fluid(
-      {
-        context: this.#ctx,
-        color: this.#rootStyle.color,
-        fps: TypeFluid.FPS,
-        stageSize: this.#stageSize,
-        startPosY: this.#textFrame.bottomPos,
-      },
-      {
-        fillTime: this.#fillTime,
-        waveHeight: this.#waveHeight,
-        rippleSpeed: this.#rippleSpeed,
-      }
-    );
+    this.#fluid = new Fluid({
+      context: this.#ctx,
+      fps: TypeFluid.FPS,
+      stageSize: this.#stageSize,
+      startPosY: this.#textFrame.bottomPos,
+      fillTime: this.#fillTime,
+    });
 
     this.#waterDropEffect = new WaterDropEffect(
       this.#ctx,
@@ -298,7 +259,7 @@ class TypeFluid {
         const dropWater = this.#waterDrops[0];
 
         if (this.#fluid.curHeight < dropWater.posY) {
-          this.#fluid.setDropPosX(dropWater.x);
+          this.#fluid.setDropPosX(dropWater.x, dropWater.weight);
           this.#waterDrops.shift();
           dropWater.reset();
         }

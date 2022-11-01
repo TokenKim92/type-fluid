@@ -1,7 +1,8 @@
+import { WEIGHT } from './utils.js';
 class WaterDrop {
-  static MIN_RADIUS = 5;
-  static MAX_RADIUS = 8;
-  static RADIUS_OFFSET = WaterDrop.MAX_RADIUS - WaterDrop.MIN_RADIUS;
+  static MIN_SIZE = 5;
+  static MAX_SIZE = 8;
+  static SIZE_OFFSET = WaterDrop.MAX_SIZE - WaterDrop.MIN_SIZE;
   static PI2 = Math.PI * 2;
 
   #sizeOffset;
@@ -10,10 +11,12 @@ class WaterDrop {
   #velocity;
   #speed;
   #initSpeed;
+  #weight;
 
   constructor(stageSize, initSpeed, dropAcceleration) {
     this.#initSpeed = initSpeed;
     this.#acceleration = dropAcceleration;
+    this.#weight = WEIGHT.mild;
 
     this.resize(stageSize);
     this.reset();
@@ -124,8 +127,8 @@ class WaterDrop {
 */
   reset = () => {
     this.#sizeOffset =
-      (Math.random() * WaterDrop.RADIUS_OFFSET + WaterDrop.MIN_RADIUS) | 0;
-
+      (Math.random() * WaterDrop.SIZE_OFFSET + WaterDrop.MIN_SIZE) | 0;
+    this.#weight = this.#getWeight(this.#sizeOffset);
     this.x =
       (Math.random() * (this.#stageSize.width - this.#sizeOffset) +
         this.#sizeOffset / 2) |
@@ -139,6 +142,17 @@ class WaterDrop {
     this.#speed = this.#initSpeed;
   };
 
+  #getWeight = (size) => {
+    switch (size) {
+      case WaterDrop.MIN_SIZE:
+        return WEIGHT.light;
+      case WaterDrop.MAX_SIZE - 1:
+        return WEIGHT.heavy;
+      default:
+        return WEIGHT.mild;
+    }
+  };
+
   get #isOutOfStage() {
     return this.y > this.#stageSize.height + this.#sizeOffset;
   }
@@ -150,6 +164,10 @@ class WaterDrop {
   get posY() {
     // This number should be constant and not changed
     return 5.5 * this.#sizeOffset + this.y;
+  }
+
+  get weight() {
+    return this.#weight;
   }
 }
 

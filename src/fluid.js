@@ -1,3 +1,4 @@
+import { WEIGHT } from './utils.js';
 import Vertex from './vertex.js';
 
 class Fluid {
@@ -14,17 +15,18 @@ class Fluid {
   #fps;
   #fillTime;
   #fillSpeed;
-  #initWaveHeight;
+  #initWaveHeight = {
+    hight: 1800,
+    middle: 1400,
+    low: 1000,
+  };
 
-  constructor(kernelOption, userOption) {
-    this.#ctx = kernelOption.context;
-    this.#fps = kernelOption.fps;
-    this.#fillTime = userOption.fillTime;
+  constructor(initAttribute) {
+    this.#ctx = initAttribute.context;
+    this.#fps = initAttribute.fps;
+    this.#fillTime = initAttribute.fillTime;
 
-    const WAVE_HEIGHT_OFFSET = 1000;
-    this.#initWaveHeight = userOption.waveHeight * WAVE_HEIGHT_OFFSET; // prettier-ignore
-
-    this.resize(kernelOption.stageSize, kernelOption.startPosY);
+    this.resize(initAttribute.stageSize, initAttribute.startPosY);
   }
 
   reset = () => {
@@ -39,7 +41,7 @@ class Fluid {
     this.#vertexCount = Math.ceil(
       stageSize.width / (Fluid.VERTEX_INTERVAL - 2)
     );
-    console.log(this.#vertexCount);
+
     this.#vertexes = [];
     this.#fillSpeed = bottomPos / ((this.#fillTime / MS_TO_S_OFFSET) * this.#fps); // prettier-ignore
 
@@ -106,11 +108,10 @@ class Fluid {
     }
   };
 
-  setDropPosX = (posX) => {
+  setDropPosX = (posX, weight) => {
     this.#droppedVertexIndex = (posX / Fluid.VERTEX_INTERVAL) | 0;
-
     this.#vertexes[this.#droppedVertexIndex].targetWaveHeight =
-      this.#initWaveHeight;
+      this.#getTargetWaveHeight(weight);
   };
 
   draw = () => {
@@ -119,6 +120,18 @@ class Fluid {
     this.#vertexes.forEach((vertex) => this.#ctx.lineTo(vertex.x, vertex.y));
     this.#ctx.lineTo(this.#stageSize.width, this.#stageSize.height);
     this.#ctx.fill();
+  };
+
+  #getTargetWaveHeight = (weight) => {
+    switch (weight) {
+      case WEIGHT.heavy:
+        return this.#initWaveHeight.hight;
+      case WEIGHT.light:
+        return this.#initWaveHeight.low;
+      case WEIGHT.mild:
+      default:
+        return this.#initWaveHeight.middle;
+    }
   };
 
   get curHeight() {

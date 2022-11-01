@@ -102,3 +102,9 @@ export const parseIntForPadding = (stylePadding) => {
 export const parseIntForMargin = (styleMargin) => {
   return parseIntForStyle(styleMargin);
 };
+
+export const WEIGHT = {
+  heavy: 0,
+  mild: 1,
+  light: 2,
+};
