@@ -40,6 +40,7 @@ class TypeFluid {
   #waterDropEffect;
   #countToDrop = TypeFluid.COUNT_TO_DROP - 1;
   #waterDrops = [];
+  #targetWaveHeight;
 
   constructor(elementId, fillTime = 5) {
     this.#typeCheck(elementId, fillTime);
@@ -238,6 +239,8 @@ class TypeFluid {
     this.#canvas.width = textFrameRect.width;
     this.#canvas.height = textFrameRect.height;
     this.#ctx.fillStyle = this.#rootStyle.color;
+
+    this.#targetWaveHeight = textFrameRect.y;
   };
 
   #resetBackground = () => {
@@ -259,7 +262,7 @@ class TypeFluid {
         return;
       }
 
-      if (this.#fluid.baseHeight < 0) {
+      if (this.#fluid.baseHeight < this.#targetWaveHeight * 0.9) {
         this.#stopFillTimer();
         this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
         this.#textFrame.drawText();
@@ -268,7 +271,10 @@ class TypeFluid {
       }
 
       this.#countToDrop = (this.#countToDrop + 1) % TypeFluid.COUNT_TO_DROP;
-      if (!this.#countToDrop) {
+      if (
+        !this.#countToDrop &&
+        this.#fluid.baseHeight >= this.#targetWaveHeight * 1.2
+      ) {
         const dropWater = this.#waterDropEffect.drop();
         dropWater && this.#waterDrops.push(dropWater);
       }

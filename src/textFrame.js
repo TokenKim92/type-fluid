@@ -20,9 +20,14 @@ class TextFrame {
         this.#drawTextFrame(stageSize, this.#text)
       );
       const lastTextField = textFields[textFields.length - 1];
+      let top = stageSize.height;
+      textFields.forEach((textField) => {
+        top > textField.y && (top = textField.y);
+      });
 
       return {
         left: textFields[0].x,
+        top,
         right: lastTextField.x + lastTextField.width,
       };
     };
@@ -55,7 +60,7 @@ class TextFrame {
     this.#ctx.save();
     this.#initContext();
 
-    const wideValue =
+    const rect =
       this.#calculateLineCount(stageSize) === 1
         ? oneLineHandler(stageSize)
         : multiLineHandler(stageSize);
@@ -65,9 +70,9 @@ class TextFrame {
 
     const widthOffset = 1.05;
     return {
-      x: wideValue.left,
-      y: 0,
-      width: ((wideValue.right - wideValue.left) * widthOffset) | 0,
+      x: rect.left,
+      y: rect.top,
+      width: ((rect.right - rect.left) * widthOffset) | 0,
       height: stageSize.height,
     };
   };
