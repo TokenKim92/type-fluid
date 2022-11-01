@@ -1,6 +1,6 @@
 class Vertex {
-  static FRICTION = 0.86;
-  static EASE = 0.1;
+  static FRICTION = 0.93;
+  static EASE = 0.08;
 
   #orgY;
   #vy;

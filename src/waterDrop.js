@@ -1,6 +1,6 @@
 import { WEIGHT } from './utils.js';
 class WaterDrop {
-  static MIN_SIZE = 2;
+  static MIN_SIZE = 4;
   static MAX_SIZE_OFFSET = 3;
   static MAX_SIZE = WaterDrop.MIN_SIZE + WaterDrop.MAX_SIZE_OFFSET;
   static PI2 = Math.PI * 2;

@@ -3,9 +3,9 @@ import Vertex from './vertex.js';
 
 class Fluid {
   static VERTEX_INTERVAL = 5;
-  static MAX_EFFECT_RANGE = 15;
-  static MAX_EFFECT_RANGE_OFFSET = 45;
-  static WAVE_STEP = 5;
+  static MAX_EFFECT_RANGE = 5;
+  static MAX_EFFECT_RANGE_OFFSET = 12;
+  static WAVE_STEP = 6;
 
   #stageSize;
   #ctx;
@@ -16,9 +16,9 @@ class Fluid {
   #fillTime;
   #fillSpeed;
   #initWaveHeight = {
-    hight: 1800,
-    middle: 1400,
-    low: 1000,
+    hight: 1000,
+    middle: 800,
+    low: 600,
   };
 
   constructor(initAttribute) {
@@ -82,7 +82,8 @@ class Fluid {
           : effectIndex / Fluid.MAX_EFFECT_RANGE_OFFSET;
 
       curVertex.targetWaveHeight =
-        (effectRatio * curVertex.targetWaveHeight + (1 - effectRatio) * prevVertex.targetWaveHeight) | 0; // prettier-ignore
+        effectRatio * curVertex.targetWaveHeight +
+        (1 - effectRatio) * prevVertex.targetWaveHeight;
 
       prevVertex = curVertex;
     }
@@ -102,7 +103,8 @@ class Fluid {
           : effectIndex / Fluid.MAX_EFFECT_RANGE_OFFSET;
 
       curVertex.targetWaveHeight =
-        (effectRatio * curVertex.targetWaveHeight + (1 - effectRatio) * prevVertex.targetWaveHeight) | 0; // prettier-ignore
+        effectRatio * curVertex.targetWaveHeight +
+        (1 - effectRatio) * prevVertex.targetWaveHeight;
 
       prevVertex = curVertex;
     }
