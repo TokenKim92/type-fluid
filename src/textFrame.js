@@ -167,6 +167,11 @@ class TextFrame {
       });
     });
 
+    while (newTextList.includes('')) {
+      const index = newTextList.indexOf('');
+      newTextList.splice(index, 1);
+    }
+
     return newTextList;
   };
 
