@@ -4,7 +4,7 @@ import Vertex from './vertex.js';
 class Fluid {
   static VERTEX_INTERVAL = 5;
   static MAX_EFFECT_RANGE = 15;
-  static MAX_EFFECT_RANGE_OFFSET = 100;
+  static MAX_EFFECT_RANGE_OFFSET = 45;
   static WAVE_STEP = 5;
 
   #stageSize;
@@ -109,7 +109,10 @@ class Fluid {
   };
 
   setDropPosX = (posX, weight) => {
-    this.#droppedVertexIndex = (posX / Fluid.VERTEX_INTERVAL) | 0;
+    const adjustedPosX =
+      posX < this.#stageSize.width ? posX : this.#stageSize.width;
+
+    this.#droppedVertexIndex = (adjustedPosX / Fluid.VERTEX_INTERVAL) | 0;
     this.#vertexes[this.#droppedVertexIndex].targetWaveHeight =
       this.#getTargetWaveHeight(weight);
   };
