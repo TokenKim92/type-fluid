@@ -11,7 +11,7 @@ import Fluid from './fluid.js';
 import WaterDropEffect from './waterDropEffect.js';
 
 class TypeFluid {
-  static FPS = 60;
+  static FPS = 30;
   static FPS_TIME = 1000 / TypeFluid.FPS;
   static COUNT_TO_DROP = TypeFluid.FPS / 2;
   static OPACITY_TRANSITION_TIME = 300;
@@ -294,7 +294,7 @@ class TypeFluid {
 
       this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
       this.#fluid.draw();
-      this.#fillText();
+      //this.#fillText();
       this.#waterDropEffect.draw();
     }, TypeFluid.FPS_TIME);
 

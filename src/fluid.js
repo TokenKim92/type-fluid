@@ -5,7 +5,7 @@ class Fluid {
   static VERTEX_INTERVAL = 5;
   static MAX_EFFECT_RANGE = 5;
   static MAX_EFFECT_RANGE_OFFSET = 12;
-  static WAVE_STEP = 6;
+  static WAVE_STEP = 7;
 
   #stageSize;
   #ctx;
@@ -16,10 +16,13 @@ class Fluid {
   #fillTime;
   #fillSpeed;
   #initWaveHeight = {
-    hight: 1000,
-    middle: 800,
-    low: 600,
+    hight: 100,
+    middle: 100,
+    low: 100,
   };
+  #waveArray = [];
+  #count = 0;
+  #temp = 0;
 
   constructor(initAttribute) {
     this.#ctx = initAttribute.context;
@@ -34,7 +37,7 @@ class Fluid {
   };
 
   resize = (stageSize, bottomPos) => {
-    const START_POS_OFFSET = 5;
+    const START_POS_OFFSET = -100;
 
     this.#droppedVertexIndex = 0;
     this.#stageSize = stageSize;
@@ -56,11 +59,62 @@ class Fluid {
         )
       );
     }
+
+    this.calculateWaveHeights();
+
+    this.tempFunction();
+  };
+
+  calculateWaveHeights = () => {
+    const arr = [];
+    const amplitudeOffset = 20;
+    arr.push(amplitudeOffset);
+    for (let i = 1; i < this.#vertexCount; i++) {
+      const x = i / 4;
+      arr.push((amplitudeOffset * Math.sin(x)) / (x * 1.3));
+    }
+
+    let sign = 1;
+    let offset = 0.4;
+    let temp = 1;
+
+    for (let i = Fluid.WAVE_STEP; i > 0; i--) {
+      for (let j = 0; j < 2 * i - 1; j++) {
+        let num = (i - Math.abs(j - (i - 1))) * sign * temp;
+        const tempArr = arr.map((height) => height * num);
+        this.#waveArray.push(tempArr);
+      }
+      sign *= -1;
+      temp *= offset;
+    }
+  };
+
+  tempFunction = () => {
+    const n = 7;
+    const arr = [];
+    let sign = 1;
+    let offset = 1;
+    let temp = 1;
+
+    for (let i = 1; i <= n; i++) {
+      for (let j = 0; j < 2 * i - 1; j++) {
+        let num = (i - Math.abs(j - (i - 1))) * sign * temp;
+
+        arr.push(num);
+      }
+      sign *= -1;
+      temp *= offset;
+    }
+    console.log(arr);
   };
 
   update = () => {
     const curVertex = this.#vertexes[this.#droppedVertexIndex];
-    curVertex.targetWaveHeight = curVertex.targetWaveHeight / Fluid.WAVE_STEP;
+
+    curVertex.targetWaveHeight = this.#waveArray[this.#count][0]; //curVertex.targetWaveHeight / Fluid.WAVE_STEP;
+
+    this.#ctx.fillRect(curVertex.x, curVertex.y, 2, 2);
+    this.#count = (this.#count + 1) % (Fluid.WAVE_STEP * Fluid.WAVE_STEP);
 
     this.#setWaveHeightLeftSide();
     this.#setWaveHeightLRightSide();
@@ -73,19 +127,19 @@ class Fluid {
     let effectRatio;
     let curVertex;
     let prevVertex = this.#vertexes[this.#droppedVertexIndex];
+    let count = 1;
 
     for (let i = this.#droppedVertexIndex - 1; i > 0; i--) {
       curVertex = this.#vertexes[i];
-      effectRatio =
-        effectIndex++ > Fluid.MAX_EFFECT_RANGE
-          ? Fluid.MAX_EFFECT_RANGE / Fluid.MAX_EFFECT_RANGE_OFFSET
-          : effectIndex / Fluid.MAX_EFFECT_RANGE_OFFSET;
-
-      curVertex.targetWaveHeight =
-        effectRatio * curVertex.targetWaveHeight +
-        (1 - effectRatio) * prevVertex.targetWaveHeight;
-
-      prevVertex = curVertex;
+      // effectRatio =
+      //   effectIndex++ > Fluid.MAX_EFFECT_RANGE
+      //     ? Fluid.MAX_EFFECT_RANGE / Fluid.MAX_EFFECT_RANGE_OFFSET
+      //     : effectIndex / Fluid.MAX_EFFECT_RANGE_OFFSET;
+      // curVertex.targetWaveHeight =
+      //   effectRatio * curVertex.targetWaveHeight +
+      //   (1 - effectRatio) * prevVertex.targetWaveHeight;
+      // prevVertex = curVertex;
+      curVertex.targetWaveHeight = this.#waveArray[this.#count][count++];
     }
   };
 
@@ -94,25 +148,25 @@ class Fluid {
     let effectRatio;
     let curVertex;
     let prevVertex = this.#vertexes[this.#droppedVertexIndex];
+    let count = 1;
 
     for (let i = this.#droppedVertexIndex + 1; i < this.#vertexCount; i++) {
       curVertex = this.#vertexes[i];
-      effectRatio =
-        effectIndex++ > Fluid.MAX_EFFECT_RANGE
-          ? Fluid.MAX_EFFECT_RANGE / Fluid.MAX_EFFECT_RANGE_OFFSET
-          : effectIndex / Fluid.MAX_EFFECT_RANGE_OFFSET;
-
-      curVertex.targetWaveHeight =
-        effectRatio * curVertex.targetWaveHeight +
-        (1 - effectRatio) * prevVertex.targetWaveHeight;
-
-      prevVertex = curVertex;
+      // effectRatio =
+      //   effectIndex++ > Fluid.MAX_EFFECT_RANGE
+      //     ? Fluid.MAX_EFFECT_RANGE / Fluid.MAX_EFFECT_RANGE_OFFSET
+      //     : effectIndex / Fluid.MAX_EFFECT_RANGE_OFFSET;
+      // curVertex.targetWaveHeight =
+      //   effectRatio * curVertex.targetWaveHeight +
+      //   (1 - effectRatio) * prevVertex.targetWaveHeight;
+      // prevVertex = curVertex;
+      curVertex.targetWaveHeight = this.#waveArray[this.#count][count++];
     }
   };
 
   setDropPosX = (posX, weight) => {
-    const adjustedPosX =
-      posX < this.#stageSize.width ? posX : this.#stageSize.width;
+    const adjustedPosX = this.#stageSize.width / 2;
+    //posX < this.#stageSize.width ? posX : this.#stageSize.width;
 
     this.#droppedVertexIndex = (adjustedPosX / Fluid.VERTEX_INTERVAL) | 0;
     this.#vertexes[this.#droppedVertexIndex].targetWaveHeight =
