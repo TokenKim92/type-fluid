@@ -27,6 +27,13 @@ class Vertex {
     this.#vy = this.#vy * Vertex.FRICTION;
     this.y += this.#vy * Vertex.EASE;
   };
+
+  calculateMaxHeight(targetWaveHeight) {
+    const baseY = this.baseY + this.#fillSpeed;
+    const vy = (this.#vy + targetWaveHeight + baseY - this.y) * Vertex.FRICTION;
+
+    return this.y + vy * Vertex.EASE;
+  }
 }
 
 export default Vertex;

@@ -12,7 +12,7 @@ import WaterDropEffect from './waterDropEffect.js';
 
 class TypeFluid {
   static FPS = 60;
-  static FPS_TIME = 1000 / TypeFluid.FPS;
+  static FPS_TIME = (1000 / TypeFluid.FPS) | 0;
   static COUNT_TO_DROP = TypeFluid.FPS / 2;
   static OPACITY_TRANSITION_TIME = 300;
   static INIT_WAVE_HEIGHT = 1;
@@ -35,12 +35,14 @@ class TypeFluid {
   #canvasContainer;
   #isInitialized = false;
   #fluid;
-  #pixelPositions;
-
+  #pixelInfosList;
+  #pixelInfosKeys;
   #waterDropEffect;
   #countToDrop = TypeFluid.COUNT_TO_DROP - 1;
   #waterDrops = [];
   #targetWaveHeight;
+
+  #imageData;
 
   constructor(elementId, fillTime = 5) {
     this.#typeCheck(elementId, fillTime);
@@ -173,10 +175,12 @@ class TypeFluid {
       width: this.#canvas.width,
       height: this.#canvas.height,
     };
-    this.#pixelPositions = this.#textFrame.getPixelPositions(stageSize);
+    this.#pixelInfosList = this.#textFrame.getPixelPositions(stageSize);
+    this.#pixelInfosKeys = Object.keys(this.#pixelInfosList).map((x) =>
+      parseInt(x)
+    );
 
     this.#fluid = new Fluid({
-      context: this.#ctx,
       fps: TypeFluid.FPS,
       stageSize: stageSize,
       startPosY: this.#textFrame.bottomPos,
@@ -222,7 +226,10 @@ class TypeFluid {
       width: this.#canvas.width,
       height: this.#canvas.height,
     };
-    this.#pixelPositions = this.#textFrame.getPixelPositions(stageSize);
+    this.#pixelInfosList = this.#textFrame.getPixelPositions(stageSize);
+    this.#pixelInfosKeys = Object.keys(this.#pixelInfosList).map((x) =>
+      parseInt(x)
+    );
     this.#fluid.resize(stageSize, this.#textFrame.bottomPos);
     this.#waterDropEffect.resize(stageSize);
 
@@ -241,6 +248,13 @@ class TypeFluid {
     this.#ctx.fillStyle = this.#rootStyle.color;
 
     this.#targetWaveHeight = textFrameRect.y;
+
+    this.#imageData = this.#ctx.getImageData(
+      0,
+      0,
+      this.#canvas.width,
+      this.#canvas.height
+    );
   };
 
   #resetBackground = () => {
@@ -262,7 +276,7 @@ class TypeFluid {
         return;
       }
 
-      if (this.#fluid.baseHeight < this.#targetWaveHeight * 0.9) {
+      if (this.#fluid.baseHeight < 0) {
         this.#stopFillTimer();
         this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
         this.#textFrame.drawText();
@@ -273,7 +287,7 @@ class TypeFluid {
       this.#countToDrop = (this.#countToDrop + 1) % TypeFluid.COUNT_TO_DROP;
       if (
         !this.#countToDrop &&
-        this.#fluid.baseHeight >= this.#targetWaveHeight * 1.2
+        this.#fluid.baseHeight >= this.#targetWaveHeight
       ) {
         const dropWater = this.#waterDropEffect.drop();
         dropWater && this.#waterDrops.push(dropWater);
@@ -291,10 +305,7 @@ class TypeFluid {
 
       this.#fluid.update();
       this.#waterDropEffect.update();
-
-      this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
-      this.#fluid.draw();
-      this.#fillText();
+      this.#drawText();
       this.#waterDropEffect.draw();
     }, TypeFluid.FPS_TIME);
 
@@ -304,41 +315,46 @@ class TypeFluid {
     };
   };
 
-  #fillText = () => {
-    const imageData = this.#ctx.getImageData(
+  #drawText = () => {
+    this.#imageData.data.fill(
       0,
       0,
-      this.#canvas.width,
-      this.#canvas.height
+      this.#fluid.maxHeight * this.#canvas.width * 4
     );
 
-    this.#hideWave(imageData.data);
+    let waveHeight;
+    let pixelInfosOnPosX;
+    let pixelInfo;
+    let index;
 
-    this.#pixelPositions.forEach((dot) => {
-      const index = dot.x + dot.y * this.#canvas.width;
-      this.#isPixelOnWave(imageData.data, index) &&
-        this.#showPixelOnWave(imageData.data, index, dot.alpha);
+    this.#pixelInfosKeys.forEach((x) => {
+      waveHeight = this.#fluid.getHeight(x);
+      pixelInfosOnPosX = this.#pixelInfosList[x];
+
+      for (let i = 0; i < pixelInfosOnPosX.length; i++) {
+        if (waveHeight > pixelInfosOnPosX[i].y) {
+          continue;
+        }
+
+        for (let j = i; j < pixelInfosOnPosX.length; j++) {
+          pixelInfo = pixelInfosOnPosX[j];
+          index = x + pixelInfo.y * this.#canvas.width;
+
+          this.#imageData.data[index * 4] = this.#fontRGB.r;
+          this.#imageData.data[index * 4 + 1] = this.#fontRGB.g;
+          this.#imageData.data[index * 4 + 2] = this.#fontRGB.b;
+          this.#imageData.data[index * 4 + 3] = pixelInfo.alpha;
+
+          if (this.#fluid.maxHeight < pixelInfo.y) {
+            pixelInfosOnPosX.splice(j, 1);
+          }
+        }
+
+        break;
+      }
     });
 
-    this.#ctx.putImageData(imageData, 0, 0);
-  };
-
-  #hideWave = (imageData) => {
-    for (let i = 0; i < imageData.length; i += 4) {
-      imageData[i + 3] = 0;
-    }
-  };
-
-  #isPixelOnWave = (imageData, index) => {
-    return (
-      imageData[index * 4] === this.#fontRGB.r &&
-      imageData[index * 4 + 1] === this.#fontRGB.g &&
-      imageData[index * 4 + 2] === this.#fontRGB.b
-    );
-  };
-
-  #showPixelOnWave = (imageData, index, alpha) => {
-    imageData[index * 4 + 3] = alpha;
+    this.#ctx.putImageData(this.#imageData, 0, 0);
   };
 
   #getClientSize = (elementObj, paddingWidth = 0, paddingHeight = 0) => {

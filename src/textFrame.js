@@ -4,6 +4,7 @@ class TextFrame {
   #text;
   #alphaValue;
   #lineTextAttributes = [];
+  #pixelObj = {};
 
   constructor(ctx, rootStyle, text, alphaValue) {
     this.#ctx = ctx;
@@ -265,7 +266,10 @@ class TextFrame {
       for (let y = textField.y; y < textField.y + textField.height; y++) {
         for (let x = textField.x; x < textField.x + textField.width; x++) {
           alpha = imageData.data[(x + y * stageSize.width) * 4 + 3];
-          alpha && pixelPositions.push({ x, y, alpha });
+          if (alpha) {
+            pixelPositions[x] ?? (pixelPositions[x] = new Array());
+            pixelPositions[x].push({ y, alpha });
+          }
         }
       }
     });
@@ -320,6 +324,10 @@ class TextFrame {
 
   #calculateLineCount = (stageRect) => {
     return Math.round(stageRect.height / this.#calculateLineHeight(stageRect));
+  };
+
+  getPixelObj = () => {
+    return this.#pixelObj;
   };
 }
 

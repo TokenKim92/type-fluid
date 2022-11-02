@@ -104,7 +104,9 @@ export const parseIntForMargin = (styleMargin) => {
 };
 
 export const WEIGHT = {
-  heavy: 0,
+  light: 0,
   mild: 1,
-  light: 2,
+  heavy: 2,
 };
+
+export const TARGET_WAVE_HEIGHT = [600, 800, 1000];
