@@ -1,9 +1,6 @@
 import { WEIGHT } from './utils.js';
 class WaterDrop {
-  static MIN_SIZE = 4;
   static MAX_SIZE_OFFSET = 3;
-  static MAX_SIZE = WaterDrop.MIN_SIZE + WaterDrop.MAX_SIZE_OFFSET;
-  static PI2 = Math.PI * 2;
 
   #sizeOffset;
   #stageSize;
@@ -12,9 +9,13 @@ class WaterDrop {
   #speed;
   #initSpeed;
   #weight;
+  #minSize;
+  #maxSize;
 
-  constructor(stageSize, initSpeed, dropAcceleration) {
+  constructor(stageSize, initSpeed, minSize, dropAcceleration) {
     this.#initSpeed = initSpeed;
+    this.#minSize = minSize;
+    this.#maxSize = minSize + WaterDrop.MAX_SIZE_OFFSET;
     this.#acceleration = dropAcceleration;
     this.#weight = WEIGHT.mild;
 
@@ -89,45 +90,10 @@ class WaterDrop {
 
     ctx.fill();
   };
-  /*
-  draw2 = (ctx) => {
-    ctx.beginPath();
 
-    ctx.ellipse(
-      -2.3 * this.#sizeOffset + this.x,
-      3.9 * this.#sizeOffset + this.y,
-      2 * this.#sizeOffset,
-      0.5 * this.#sizeOffset,
-      Math.PI * 1.2,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-    ctx.beginPath();
-    ctx.ellipse(
-      1.7 * this.#sizeOffset + this.x,
-      4.5 * this.#sizeOffset + this.y,
-      2 * this.#sizeOffset,
-      0.5 * this.#sizeOffset,
-      -Math.PI * 1.3,
-      0,
-      Math.PI * 2
-    );
-    ctx.ellipse(
-      4.5 * this.#sizeOffset + this.x,
-      2 * this.#sizeOffset + this.y,
-      1.5 * this.#sizeOffset,
-      0.5 * this.#sizeOffset,
-      -Math.PI * 1.2,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-  };
-*/
   reset = () => {
     this.#sizeOffset =
-      (Math.random() * WaterDrop.MAX_SIZE_OFFSET + WaterDrop.MIN_SIZE) | 0;
+      (Math.random() * WaterDrop.MAX_SIZE_OFFSET + this.#minSize) | 0;
     this.#weight = this.#getWeight(this.#sizeOffset);
     this.x =
       (Math.random() * (this.#stageSize.width - this.#sizeOffset) +
@@ -144,9 +110,9 @@ class WaterDrop {
 
   #getWeight = (size) => {
     switch (size) {
-      case WaterDrop.MIN_SIZE:
+      case this.#minSize:
         return WEIGHT.light;
-      case WaterDrop.MAX_SIZE - 1:
+      case this.#maxSize - 1:
         return WEIGHT.heavy;
       default:
         return WEIGHT.mild;

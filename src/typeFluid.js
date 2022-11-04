@@ -190,7 +190,8 @@ class TypeFluid {
     this.#waterDropEffect = new WaterDropEffect(
       this.#ctx,
       stageSize,
-      TypeFluid.FPS
+      TypeFluid.FPS,
+      parseInt(this.#rootStyle.fontSize)
     );
 
     this.#isInitialized = true;
