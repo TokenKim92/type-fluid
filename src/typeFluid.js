@@ -18,31 +18,32 @@ class TypeFluid {
   static INIT_WAVE_HEIGHT = 1;
   static INIT_RIPPLE_SPEED = 5;
 
+  #fillTime;
+  #canvasContainer;
   #canvas;
   #ctx;
   #backgroundCanvas = undefined;
   #backgroundCtx;
   #rootElement;
   #elementObj;
+  #rootStyle;
+  #textFrame;
+  #fluid;
+  #waterDropEffect;
+  #imageData;
   #text;
   #stopFillTimer;
-  #textFrame;
   #backgroundSize;
-  #fillTime;
   #fontRGB;
-  #rootStyle;
   #isProcessing = false;
-  #canvasContainer;
   #isInitialized = false;
-  #fluid;
-  #pixelInfosList;
-  #pixelInfosKeys;
-  #waterDropEffect;
   #countToDrop = TypeFluid.COUNT_TO_DROP - 1;
   #waterDrops = [];
   #targetWaveHeight;
-
-  #imageData;
+  #pixelInfosList;
+  #pixelInfosKeys;
+  #pixelHeightsList = {};
+  #pixelAlphasList = {};
 
   constructor(elementId, fillTime = 5) {
     this.#typeCheck(elementId, fillTime);
@@ -76,10 +77,17 @@ class TypeFluid {
   };
 
   restart = () => {
+    if (!this.#isInitialized) {
+      return;
+    }
+
     this.#isProcessing && this.#stopFillTimer();
 
     this.#isProcessing = true;
+    this.#imageData.data.fill(0);
+    this.#ctx.putImageData(this.#imageData, 0, 0);
     this.#fluid.reset();
+    this.#resetPixelInfosList();
 
     this.#setFillTimer();
   };
@@ -175,24 +183,19 @@ class TypeFluid {
       width: this.#canvas.width,
       height: this.#canvas.height,
     };
-    this.#pixelInfosList = this.#textFrame.getPixelPositions(stageSize);
-    this.#pixelInfosKeys = Object.keys(this.#pixelInfosList).map((x) =>
-      parseInt(x)
-    );
-
     this.#fluid = new Fluid({
       fps: TypeFluid.FPS,
       stageSize: stageSize,
       startPosY: this.#textFrame.bottomPos,
       fillTime: this.#fillTime,
     });
-
     this.#waterDropEffect = new WaterDropEffect(
       this.#ctx,
       stageSize,
       TypeFluid.FPS,
       parseInt(this.#rootStyle.fontSize)
     );
+    this.#initPixelInfosList(stageSize);
 
     this.#isInitialized = true;
   };
@@ -227,14 +230,30 @@ class TypeFluid {
       width: this.#canvas.width,
       height: this.#canvas.height,
     };
-    this.#pixelInfosList = this.#textFrame.getPixelPositions(stageSize);
-    this.#pixelInfosKeys = Object.keys(this.#pixelInfosList).map((x) =>
-      parseInt(x)
-    );
     this.#fluid.resize(stageSize, this.#textFrame.bottomPos);
     this.#waterDropEffect.resize(stageSize);
+    this.#initPixelInfosList(stageSize);
 
     this.restart();
+  };
+
+  #initPixelInfosList = (stageSize) => {
+    this.#pixelInfosList = this.#textFrame.getPixelInfosList(stageSize);
+    this.#pixelInfosKeys = Object.keys(this.#pixelInfosList.posList).map((x) =>
+      parseInt(x)
+    );
+
+    this.#resetPixelInfosList();
+  };
+
+  #resetPixelInfosList = () => {
+    const pixelHeightsList = this.#pixelInfosList.posList;
+    const pixelAlphasList = this.#pixelInfosList.alphaList;
+
+    this.#pixelInfosKeys.forEach((key) => {
+      this.#pixelHeightsList[key] = [...pixelHeightsList[key]];
+      this.#pixelAlphasList[key] = [...pixelAlphasList[key]];
+    });
   };
 
   #resetStage = () => {
@@ -279,7 +298,6 @@ class TypeFluid {
 
       if (this.#fluid.baseHeight < 0) {
         this.#stopFillTimer();
-        this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
         this.#textFrame.drawText();
 
         return;
@@ -312,7 +330,6 @@ class TypeFluid {
 
     this.#stopFillTimer = () => {
       clearInterval(intervalId);
-      this.#textFrame.drawText();
     };
   };
 
@@ -324,30 +341,31 @@ class TypeFluid {
     );
 
     let waveHeight;
-    let pixelInfosOnPosX;
-    let pixelInfo;
+    let pixelHeightsOnPosX;
+    let pixelHeight;
     let index;
 
     this.#pixelInfosKeys.forEach((x) => {
       waveHeight = this.#fluid.getHeightOnPosX(x);
-      pixelInfosOnPosX = this.#pixelInfosList[x];
+      pixelHeightsOnPosX = this.#pixelHeightsList[x];
 
-      for (let i = 0; i < pixelInfosOnPosX.length; i++) {
-        if (waveHeight > pixelInfosOnPosX[i].y) {
+      for (let i = 0; i < pixelHeightsOnPosX.length; i++) {
+        if (waveHeight > pixelHeightsOnPosX[i]) {
           continue;
         }
 
-        for (let j = i; j < pixelInfosOnPosX.length; j++) {
-          pixelInfo = pixelInfosOnPosX[j];
-          index = x + pixelInfo.y * this.#canvas.width;
+        for (let j = i; j < pixelHeightsOnPosX.length; j++) {
+          pixelHeight = pixelHeightsOnPosX[j];
+          index = x + pixelHeight * this.#canvas.width;
 
           this.#imageData.data[index * 4] = this.#fontRGB.r;
           this.#imageData.data[index * 4 + 1] = this.#fontRGB.g;
           this.#imageData.data[index * 4 + 2] = this.#fontRGB.b;
-          this.#imageData.data[index * 4 + 3] = pixelInfo.alpha;
+          this.#imageData.data[index * 4 + 3] = this.#pixelAlphasList[x][j];
 
-          if (this.#fluid.maxHeight < pixelInfo.y) {
-            pixelInfosOnPosX.splice(j, 1);
+          if (this.#fluid.maxHeight < pixelHeight) {
+            pixelHeightsOnPosX.splice(j, 1);
+            this.#pixelAlphasList[x].splice(j, 1);
           }
         }
 

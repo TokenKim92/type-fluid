@@ -26,6 +26,8 @@ class Fluid {
   }
 
   reset = () => {
+    this.#droppedIndex = 0;
+    this.#maxHeight = this.#stageSize.height;
     this.#vertexes.forEach((vertex) => vertex.reset());
   };
 

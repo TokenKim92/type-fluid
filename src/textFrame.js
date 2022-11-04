@@ -4,7 +4,6 @@ class TextFrame {
   #text;
   #alphaValue;
   #lineTextAttributes = [];
-  #pixelObj = {};
 
   constructor(ctx, rootStyle, text, alphaValue) {
     this.#ctx = ctx;
@@ -78,7 +77,7 @@ class TextFrame {
     };
   };
 
-  getPixelPositions = (stageSize) => {
+  getPixelInfosList = (stageSize) => {
     const oneLineHandler = (stageSize) => {
       const baseLine = this.#drawTextFrame(stageSize, this.#text);
       this.#lineTextAttributes.push({
@@ -117,12 +116,12 @@ class TextFrame {
       this.#calculateLineCount(stageSize) === 1
         ? oneLineHandler(stageSize)
         : multiLineHandler(stageSize);
-    const pixelPositions = this.#createPixelPositions(stageSize, textFields);
+    const pixelInfosList = this.#initPixelInfosList(stageSize, textFields);
 
     this.#ctx.clearRect(0, 0, stageSize.width, stageSize.height);
     this.#ctx.restore();
 
-    return pixelPositions;
+    return pixelInfosList;
   };
 
   drawText = () => {
@@ -255,8 +254,9 @@ class TextFrame {
     return textFields;
   };
 
-  #createPixelPositions = (stageSize, textFields) => {
-    const pixelPositions = [];
+  #initPixelInfosList = (stageSize, textFields) => {
+    const posList = [];
+    const alphaList = [];
     const imageData = this.#ctx.getImageData(
       0, 0, stageSize.width, stageSize.height
     ); // prettier-ignore
@@ -267,14 +267,21 @@ class TextFrame {
         for (let x = textField.x; x < textField.x + textField.width; x++) {
           alpha = imageData.data[(x + y * stageSize.width) * 4 + 3];
           if (alpha) {
-            pixelPositions[x] ?? (pixelPositions[x] = new Array());
-            pixelPositions[x].push({ y, alpha });
+            if (!posList[x]) {
+              posList[x] = new Array();
+              alphaList[x] = new Array();
+            }
+
+            if (!posList[x].includes(y)) {
+              posList[x].push(y);
+              alphaList[x].push(alpha);
+            }
           }
         }
       }
     });
 
-    return pixelPositions;
+    return { posList, alphaList };
   };
 
   #calculateBaseLinePos = (stageSize, textMetrics, index) => {
@@ -324,10 +331,6 @@ class TextFrame {
 
   #calculateLineCount = (stageRect) => {
     return Math.round(stageRect.height / this.#calculateLineHeight(stageRect));
-  };
-
-  getPixelObj = () => {
-    return this.#pixelObj;
   };
 }
 
