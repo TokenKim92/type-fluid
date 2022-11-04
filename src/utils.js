@@ -109,4 +109,5 @@ export const WEIGHT = {
   heavy: 2,
 };
 
-export const TARGET_WAVE_HEIGHT = [600, 800, 1000];
+export const HIGH_WAVE_HEIGHT = [600, 800, 1000];
+export const LOW_WAVE_HEIGHT = [100, 200, 300];

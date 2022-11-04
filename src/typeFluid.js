@@ -328,7 +328,7 @@ class TypeFluid {
     let index;
 
     this.#pixelInfosKeys.forEach((x) => {
-      waveHeight = this.#fluid.getHeight(x);
+      waveHeight = this.#fluid.getHeightOnPosX(x);
       pixelInfosOnPosX = this.#pixelInfosList[x];
 
       for (let i = 0; i < pixelInfosOnPosX.length; i++) {

@@ -1,20 +1,22 @@
-import { WEIGHT, TARGET_WAVE_HEIGHT } from './utils.js';
+import { WEIGHT, HIGH_WAVE_HEIGHT, LOW_WAVE_HEIGHT } from './utils.js';
 import Vertex from './vertex.js';
 
 class Fluid {
-  static VERTEX_INTERVAL = 3;
+  static MAX_VERTEX_COUNT = 400;
   static MAX_EFFECT_RANGE = 5;
   static MAX_EFFECT_RANGE_OFFSET = 20;
   static WAVE_STEP = 6;
 
-  #stageSize;
-  #vertexCount;
   #vertexes = [];
-  #droppedIndex;
+  #vertexCount;
+  #vertexInterval;
+  #stageSize;
   #fps;
   #fillTime;
   #fillSpeed;
   #maxHeight;
+  #initWaveHeight;
+  #droppedIndex;
 
   constructor(initAttribute) {
     this.#fps = initAttribute.fps;
@@ -30,10 +32,17 @@ class Fluid {
   resize = (stageSize, bottomPos) => {
     const START_Y_OFFSET = 5;
 
+    if (stageSize.width < Fluid.MAX_VERTEX_COUNT) {
+      this.#vertexCount = stageSize.width;
+      this.#initWaveHeight = LOW_WAVE_HEIGHT;
+    } else {
+      this.#vertexCount = Fluid.MAX_VERTEX_COUNT;
+      this.#initWaveHeight = HIGH_WAVE_HEIGHT;
+    }
+
     this.#droppedIndex = 0;
     this.#stageSize = stageSize;
-    this.#vertexCount = (stageSize.width / Fluid.VERTEX_INTERVAL) | 0;
-    console.log(this.#vertexCount);
+    this.#vertexInterval = stageSize.width / this.#vertexCount;
     this.#vertexes = [];
     this.#fillSpeed = bottomPos / (this.#fillTime * this.#fps);
     this.#maxHeight = stageSize.height;
@@ -41,7 +50,7 @@ class Fluid {
     const startPosY = bottomPos + START_Y_OFFSET;
     for (let i = 0; i < this.#vertexCount; i++) {
       this.#vertexes.push(
-        new Vertex(Fluid.VERTEX_INTERVAL * i, startPosY, this.#fillSpeed)
+        new Vertex(this.#vertexInterval * i, startPosY, this.#fillSpeed)
       );
     }
   };
@@ -55,11 +64,11 @@ class Fluid {
   };
 
   #setSideWaveHeight = () => {
-    // left side
     let curVertex;
     let prevVertex = this.#vertexes[this.#droppedIndex];
     let effectRatio;
     let effectIndex = 0;
+    // left side
     for (let i = this.#droppedIndex - 1; i > 0; i--) {
       curVertex = this.#vertexes[i];
 
@@ -75,9 +84,9 @@ class Fluid {
       prevVertex = curVertex;
     }
 
-    // right side
     effectIndex = 0;
     prevVertex = this.#vertexes[this.#droppedIndex];
+    // right side
     for (let i = this.#droppedIndex + 1; i < this.#vertexCount; i++) {
       curVertex = this.#vertexes[i];
 
@@ -97,19 +106,23 @@ class Fluid {
   setDropPosX = (x, weight) => {
     this.#droppedIndex =
       x < this.#stageSize.width
-        ? (x / Fluid.VERTEX_INTERVAL) | 0
-        : (this.#stageSize.width / Fluid.VERTEX_INTERVAL) | 0;
+        ? (x / this.#vertexInterval) | 0
+        : this.#vertexCount - 1;
 
     const curVertex = this.#vertexes[this.#droppedIndex];
-    curVertex.targetWaveHeight = TARGET_WAVE_HEIGHT[weight];
+    curVertex.targetWaveHeight = this.#initWaveHeight[weight];
 
     const curMaxHeight = curVertex.calculateMaxHeight(
-      TARGET_WAVE_HEIGHT[WEIGHT.heavy]
+      this.#initWaveHeight[WEIGHT.heavy]
     );
     this.#maxHeight =
       this.#maxHeight < curMaxHeight ? this.maxHeight : curMaxHeight;
     this.#maxHeight |= 0;
   };
+
+  getHeightOnPosX(x) {
+    return this.#vertexes[(x / this.#vertexInterval) | 0].y;
+  }
 
   get curHeight() {
     return this.#vertexes[this.#droppedIndex].y;
@@ -117,10 +130,6 @@ class Fluid {
 
   get baseHeight() {
     return this.#vertexes[0].baseY;
-  }
-
-  getHeight(x) {
-    return this.#vertexes[(x / Fluid.VERTEX_INTERVAL) | 0].y;
   }
 
   get maxHeight() {
