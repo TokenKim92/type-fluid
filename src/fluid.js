@@ -106,7 +106,11 @@ class Fluid {
   };
 
   setDropPosX = (x, weight) => {
-    this.#droppedIndex = (x / this.#vertexInterval) | 0;
+    this.#droppedIndex =
+      x < this.#stageSize.width
+        ? (x / this.#vertexInterval) | 0
+        : this.#vertexCount - 1;
+
     const curVertex = this.#vertexes[this.#droppedIndex];
     curVertex.targetWaveHeight = this.#initWaveHeight[weight];
 
@@ -119,11 +123,11 @@ class Fluid {
   };
 
   getHeightOnPosX(x) {
-    return this.#vertexes[(x / this.#vertexInterval) | 0].y;
-  }
-
-  get curHeight() {
-    return this.#vertexes[this.#droppedIndex].y;
+    const index =
+      x < this.#stageSize.width
+        ? (x / this.#vertexInterval) | 0
+        : this.#vertexCount - 1;
+    return this.#vertexes[index].y;
   }
 
   get baseHeight() {

@@ -21,9 +21,9 @@ class TextFrame {
       );
       const lastTextField = textFields[textFields.length - 1];
       let top = stageSize.height;
-      textFields.forEach((textField) => {
-        top > textField.y && (top = textField.y);
-      });
+      textFields.forEach(
+        (textField) => top > textField.y && (top = textField.y)
+      );
 
       return {
         left: textFields[0].x,
@@ -38,6 +38,7 @@ class TextFrame {
       let lastTextField, lastTextFieldRight;
       let left = stageSize.width;
       let right = 0;
+      let top = stageSize.height;
 
       textList.forEach((lineText, index) => {
         textFields = this.#getTextFields(
@@ -49,10 +50,17 @@ class TextFrame {
 
         left > textFields[0].x && (left = textFields[0].x);
         right < lastTextFieldRight && (right = lastTextFieldRight);
+
+        if (index === 0) {
+          textFields.forEach(
+            (textField) => top > textField.y && (top = textField.y)
+          );
+        }
       });
 
       return {
         left,
+        top,
         right,
       };
     };
@@ -71,7 +79,7 @@ class TextFrame {
     return {
       x: rect.left,
       y: rect.top,
-      width: (rect.right - rect.left) | 0,
+      width: rect.right - rect.left,
       height: stageSize.height,
     };
   };
