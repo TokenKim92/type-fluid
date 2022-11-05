@@ -13,7 +13,6 @@ import WaterDropEffect from './waterDropEffect.js';
 class TypeFluid {
   static FPS = 60;
   static FPS_TIME = (1000 / TypeFluid.FPS) | 0;
-  static COUNT_TO_DROP = TypeFluid.FPS / 2;
   static OPACITY_TRANSITION_TIME = 300;
   static INIT_WAVE_HEIGHT = 1;
   static INIT_RIPPLE_SPEED = 5;
@@ -37,18 +36,21 @@ class TypeFluid {
   #fontRGB;
   #isProcessing = false;
   #isInitialized = false;
-  #countToDrop = TypeFluid.COUNT_TO_DROP - 1;
+  #countToDropWater;
   #waterDrops = [];
   #targetWaveHeight;
   #pixelInfosList;
   #pixelInfosKeys;
   #pixelHeightsList = {};
   #pixelAlphasList = {};
+  #maxWaterDropCount;
 
-  constructor(elementId, fillTime = 5) {
-    this.#typeCheck(elementId, fillTime);
+  constructor(elementId, fillTime = 5, maxWaterDropCount = 3) {
+    this.#typeCheck(elementId, fillTime, maxWaterDropCount);
 
     this.#fillTime = fillTime;
+    this.#maxWaterDropCount = maxWaterDropCount | 0;
+    this.#countToDropWater = fillTime - 1;
     this.#text = this.#elementObj.innerText;
     this.#rootStyle = window.getComputedStyle(this.#elementObj);
     this.#fontRGB = colorToRGB(this.#rootStyle.color);
@@ -92,9 +94,10 @@ class TypeFluid {
     this.#setFillTimer();
   };
 
-  #typeCheck(elementId, fillSpeed) {
+  #typeCheck(elementId, fillSpeed, maxWaterDropCount) {
     checkType(elementId, primitiveType.string);
     checkType(fillSpeed, primitiveType.number);
+    checkType(maxWaterDropCount, primitiveType.number);
 
     this.#elementObj = document.querySelector(`#${elementId}`);
     if (!this.#elementObj) {
@@ -103,6 +106,10 @@ class TypeFluid {
 
     if (fillSpeed <= 0) {
       throw new Error("'spreadSpeed' should be greater then 0.");
+    }
+
+    if (maxWaterDropCount <= 0) {
+      throw new Error("'maxWaterDropCount' should be greater then 0.");
     }
   }
 
@@ -193,7 +200,8 @@ class TypeFluid {
       this.#ctx,
       stageSize,
       TypeFluid.FPS,
-      parseInt(this.#rootStyle.fontSize)
+      parseInt(this.#rootStyle.fontSize),
+      this.#maxWaterDropCount
     );
     this.#initPixelInfosList(stageSize);
 
@@ -303,27 +311,12 @@ class TypeFluid {
         return;
       }
 
-      this.#countToDrop = (this.#countToDrop + 1) % TypeFluid.COUNT_TO_DROP;
-      if (
-        !this.#countToDrop &&
-        this.#fluid.baseHeight >= this.#targetWaveHeight
-      ) {
-        const dropWater = this.#waterDropEffect.drop();
-        dropWater && this.#waterDrops.push(dropWater);
-      }
-
-      if (this.#waterDrops.length) {
-        const dropWater = this.#waterDrops[0];
-
-        if (this.#fluid.curHeight < dropWater.posY) {
-          this.#fluid.setDropPosX(dropWater.x, dropWater.weight);
-          this.#waterDrops.shift();
-          dropWater.reset();
-        }
-      }
+      this.#checkToDropWater();
+      this.#onDropWater();
 
       this.#fluid.update();
       this.#waterDropEffect.update();
+
       this.#drawText();
       this.#waterDropEffect.draw();
     }, TypeFluid.FPS_TIME);
@@ -331,6 +324,32 @@ class TypeFluid {
     this.#stopFillTimer = () => {
       clearInterval(intervalId);
     };
+  };
+
+  #checkToDropWater = () => {
+    this.#countToDropWater = (this.#countToDropWater + 1) % this.#fillTime;
+
+    if (this.#countToDropWater || this.#fluid.baseHeight < this.#targetWaveHeight) {
+      return;
+    } // prettier-ignore
+
+    const dropWater = this.#waterDropEffect.drop();
+    dropWater && this.#waterDrops.push(dropWater);
+  };
+
+  #onDropWater = () => {
+    let waterDrop;
+
+    for (let i = 0; i < this.#waterDrops.length; i++) {
+      waterDrop = this.#waterDrops[i];
+      if (this.#fluid.getHeightOnPosX(waterDrop.x) > waterDrop.posY) {
+        continue;
+      }
+
+      this.#fluid.setDropPosX(waterDrop.x, waterDrop.weight);
+      this.#waterDrops.splice(i, 1);
+      waterDrop.reset();
+    }
   };
 
   #drawText = () => {

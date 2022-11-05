@@ -1,4 +1,4 @@
-import { WEIGHT } from './utils.js';
+import { WEIGHT, DROP_SPEED } from './utils.js';
 class WaterDrop {
   static MAX_SIZE_OFFSET = 3;
 
@@ -12,12 +12,12 @@ class WaterDrop {
   #minSize;
   #maxSize;
 
-  constructor(stageSize, initSpeed, minSize, dropAcceleration) {
-    this.#initSpeed = initSpeed;
+  constructor(stageSize, minSize, dropAcceleration) {
     this.#minSize = minSize;
     this.#maxSize = minSize + WaterDrop.MAX_SIZE_OFFSET;
     this.#acceleration = dropAcceleration;
     this.#weight = WEIGHT.mild;
+    this.#initSpeed = DROP_SPEED[this.#weight];
 
     this.resize(stageSize);
     this.reset();
@@ -92,9 +92,9 @@ class WaterDrop {
   };
 
   reset = () => {
-    this.#sizeOffset =
-      (Math.random() * WaterDrop.MAX_SIZE_OFFSET + this.#minSize) | 0;
+    this.#sizeOffset = (Math.random() * WaterDrop.MAX_SIZE_OFFSET + this.#minSize) | 0; // prettier-ignore
     this.#weight = this.#getWeight(this.#sizeOffset);
+    this.#initSpeed = DROP_SPEED[this.#weight];
     this.x =
       (Math.random() * (this.#stageSize.width - this.#sizeOffset) +
         this.#sizeOffset / 2) |

@@ -108,6 +108,6 @@ export const WEIGHT = {
   mild: 1,
   heavy: 2,
 };
-
 export const HIGH_WAVE_HEIGHT = [600, 800, 1000];
 export const LOW_WAVE_HEIGHT = [100, 200, 300];
+export const DROP_SPEED = [0.3, 0.5, 0.7];

@@ -1,23 +1,23 @@
 import WaterDrop from './waterDrop.js';
 
 class WaterDropEffect {
-  static WATER_DROP_COUNT = 3;
-
   #ctx;
   #waterDrops = [];
   #curIndex = 0;
+  #maxWaterDropCount;
 
-  constructor(ctx, stageSize, fps, fontSize) {
+  constructor(ctx, stageSize, fps, fontSize, maxWaterDropCount) {
     this.#ctx = ctx;
+    this.#maxWaterDropCount = maxWaterDropCount;
 
     const INIT_SPEED = 0.5;
     const waterDropMinSize = (1 + fontSize / 100) | 0;
     const dropAcceleration =
       (2 * (stageSize.height - fps * INIT_SPEED)) / (fps * fps);
 
-    for (let i = 0; i < WaterDropEffect.WATER_DROP_COUNT; i++) {
+    for (let i = 0; i < this.#maxWaterDropCount; i++) {
       this.#waterDrops.push(
-        new WaterDrop(stageSize, INIT_SPEED, waterDropMinSize, dropAcceleration)
+        new WaterDrop(stageSize, waterDropMinSize, dropAcceleration)
       );
     }
   }
@@ -37,7 +37,7 @@ class WaterDropEffect {
 
   drop = () => {
     const waterDrop = this.#waterDrops[this.#curIndex];
-    this.#curIndex = (this.#curIndex + 1) % WaterDropEffect.WATER_DROP_COUNT;
+    this.#curIndex = (this.#curIndex + 1) % this.#maxWaterDropCount;
 
     if (waterDrop.isDropping) {
       return undefined;
