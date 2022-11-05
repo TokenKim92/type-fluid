@@ -68,11 +68,10 @@ class TextFrame {
     this.#ctx.clearRect(0, 0, stageSize.width, stageSize.height);
     this.#ctx.restore();
 
-    const widthOffset = 1.05;
     return {
       x: rect.left,
       y: rect.top,
-      width: ((rect.right - rect.left) * widthOffset) | 0,
+      width: (rect.right - rect.left) | 0,
       height: stageSize.height,
     };
   };
@@ -288,14 +287,16 @@ class TextFrame {
     const calculateBaseLinePosX = () => {
       switch (this.#rootStyle.textAlign) {
         case 'end':
-          return Math.round(stageSize.width - textMetrics.width);
+          return Math.round(
+            stageSize.width - textMetrics.actualBoundingBoxRight
+          );
         case 'center':
           return Math.round((stageSize.width - textMetrics.width) / 2);
         case 'justify':
           console.warn("'justify' option doesn't work.");
         case 'start':
         default:
-          return 0;
+          return Math.round(textMetrics.actualBoundingBoxLeft);
       }
     };
 
