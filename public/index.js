@@ -1,4 +1,4 @@
-import TypeFluid from '../src/typeFluid.js';
+import TypeFluid from "../src/typeFluid.js";
 
-const type = new TypeFluid('type', 10);
+const type = new TypeFluid("type", 15);
 type.start();
