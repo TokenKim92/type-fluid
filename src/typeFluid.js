@@ -63,6 +63,12 @@ class TypeFluid {
   }
 
   start = () => {
+    if (!this.#isInitialized) {
+      setTimeout(() => this.start(), TypeFluid.OPACITY_TRANSITION_TIME);
+
+      return;
+    }
+
     if (!this.#isProcessing) {
       this.#isProcessing = true;
       requestAnimationFrame(this.#draw);
@@ -77,6 +83,8 @@ class TypeFluid {
 
   restart = () => {
     if (!this.#isInitialized) {
+      setTimeout(() => this.start(), TypeFluid.OPACITY_TRANSITION_TIME);
+
       return;
     }
 
@@ -296,25 +304,27 @@ class TypeFluid {
   };
 
   #draw = () => {
-    if (this.#isInitialized) {
-      if (this.#fluid.baseHeight < 0 || !this.#isProcessing) {
-        if (this.#isProcessing) {
-          this.#isProcessing = false;
-          this.#textFrame.drawText();
-        }
+    if (!this.#isProcessing) {
+      return;
+    }
 
-        return;
+    if (this.#fluid.baseHeight < 0) {
+      if (this.#isProcessing) {
+        this.#isProcessing = false;
+        this.#textFrame.drawText();
       }
 
-      this.#checkToDropWater();
-      this.#onDropWater();
-
-      this.#fluid.update();
-      this.#waterDropEffect.update();
-
-      this.#drawText();
-      this.#waterDropEffect.draw();
+      return;
     }
+
+    this.#checkToDropWater();
+    this.#onDropWater();
+
+    this.#fluid.update();
+    this.#waterDropEffect.update();
+
+    this.#drawText();
+    this.#waterDropEffect.draw();
 
     requestAnimationFrame(this.#draw);
   };
