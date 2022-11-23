@@ -32,8 +32,6 @@ class Fluid {
   };
 
   resize = (stageSize, bottomPos) => {
-    const START_Y_OFFSET = 5;
-
     if (stageSize.width < Fluid.MAX_VERTEX_COUNT) {
       this.#vertexCount = stageSize.width;
       this.#initWaveHeight = LOW_WAVE_HEIGHT;
@@ -49,7 +47,7 @@ class Fluid {
     this.#fillSpeed = bottomPos / (this.#fillTime * this.#fps);
     this.#maxHeight = stageSize.height;
 
-    const startPosY = bottomPos + START_Y_OFFSET;
+    const startPosY = bottomPos + 5;
     for (let i = 0; i < this.#vertexCount; i++) {
       this.#vertexes.push(
         new Vertex(this.#vertexInterval * i, startPosY, this.#fillSpeed)
@@ -71,7 +69,7 @@ class Fluid {
     let effectRatio;
     let effectIndex = 0;
     // left side
-    for (let i = this.#droppedIndex - 1; i > 0; i--) {
+    for (let i = this.#droppedIndex - 1; i >= 0; i--) {
       curVertex = this.#vertexes[i];
 
       effectRatio =
