@@ -12,7 +12,6 @@ import WaterDropEffect from './waterDropEffect.js';
 
 class TypeFluid {
   static FPS = 60;
-  static FPS_TIME = (1000 / TypeFluid.FPS) | 0;
   static OPACITY_TRANSITION_TIME = 300;
   static INIT_WAVE_HEIGHT = 1;
   static INIT_RIPPLE_SPEED = 5;
@@ -31,7 +30,6 @@ class TypeFluid {
   #waterDropEffect;
   #imageData;
   #text;
-  #stopFillTimer;
   #backgroundSize;
   #fontRGB;
   #isProcessing = false;
@@ -66,14 +64,13 @@ class TypeFluid {
 
   start = () => {
     if (!this.#isProcessing) {
-      this.#setFillTimer();
       this.#isProcessing = true;
+      requestAnimationFrame(this.#draw);
     }
   };
 
   stop = () => {
     if (this.#isProcessing) {
-      this.#stopFillTimer();
       this.#isProcessing = false;
     }
   };
@@ -83,15 +80,15 @@ class TypeFluid {
       return;
     }
 
-    this.#isProcessing && this.#stopFillTimer();
-
-    this.#isProcessing = true;
     this.#imageData.data.fill(0);
     this.#ctx.putImageData(this.#imageData, 0, 0);
     this.#fluid.reset();
     this.#resetPixelInfosList();
 
-    this.#setFillTimer();
+    if (!this.#isProcessing) {
+      this.#isProcessing = true;
+      requestAnimationFrame(this.#draw);
+    }
   };
 
   #typeCheck(elementId, fillSpeed, maxWaterDropCount) {
@@ -298,15 +295,13 @@ class TypeFluid {
     );
   };
 
-  #setFillTimer = () => {
-    const intervalId = setInterval(() => {
-      if (!this.#isInitialized) {
-        return;
-      }
-
-      if (this.#fluid.baseHeight < 0) {
-        this.#stopFillTimer();
-        this.#textFrame.drawText();
+  #draw = () => {
+    if (this.#isInitialized) {
+      if (this.#fluid.baseHeight < 0 || !this.#isProcessing) {
+        if (this.#isProcessing) {
+          this.#isProcessing = false;
+          this.#textFrame.drawText();
+        }
 
         return;
       }
@@ -319,11 +314,9 @@ class TypeFluid {
 
       this.#drawText();
       this.#waterDropEffect.draw();
-    }, TypeFluid.FPS_TIME);
+    }
 
-    this.#stopFillTimer = () => {
-      clearInterval(intervalId);
-    };
+    requestAnimationFrame(this.#draw);
   };
 
   #checkToDropWater = () => {
