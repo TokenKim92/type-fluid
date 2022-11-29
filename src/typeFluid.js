@@ -12,6 +12,7 @@ import WaterDropEffect from './waterDropEffect.js';
 
 class TypeFluid {
   static FPS = 60;
+  static FPS_TIME = (1000 / TypeFluid.FPS) | 0;
   static OPACITY_TRANSITION_TIME = 300;
   static INIT_WAVE_HEIGHT = 1;
   static INIT_RIPPLE_SPEED = 5;
@@ -43,6 +44,7 @@ class TypeFluid {
   #pixelAlphasList = {};
   #maxWaterDropCount;
   #handleStopped;
+  #previousTime = 0;
 
   constructor(elementId, fillTime = 5, maxWaterDropCount = 3) {
     this.#typeCheck(elementId, fillTime, maxWaterDropCount);
@@ -308,7 +310,7 @@ class TypeFluid {
     );
   };
 
-  #draw = () => {
+  #draw = (currentTime) => {
     if (!this.#isProcessing) {
       return;
     }
@@ -321,14 +323,18 @@ class TypeFluid {
       return;
     }
 
-    this.#checkToDropWater();
-    this.#onDropWater();
+    if (currentTime - this.#previousTime > TypeFluid.FPS_TIME) {
+      this.#checkToDropWater();
+      this.#onDropWater();
 
-    this.#fluid.update();
-    this.#waterDropEffect.update();
+      this.#fluid.update();
+      this.#waterDropEffect.update();
 
-    this.#drawText();
-    this.#waterDropEffect.draw();
+      this.#drawText();
+      this.#waterDropEffect.draw();
+
+      this.#previousTime = currentTime;
+    }
 
     requestAnimationFrame(this.#draw);
   };
