@@ -42,6 +42,7 @@ class TypeFluid {
   #pixelHeightsList = {};
   #pixelAlphasList = {};
   #maxWaterDropCount;
+  #handleStopped;
 
   constructor(elementId, fillTime = 5, maxWaterDropCount = 3) {
     this.#typeCheck(elementId, fillTime, maxWaterDropCount);
@@ -97,6 +98,10 @@ class TypeFluid {
       this.#isProcessing = true;
       requestAnimationFrame(this.#draw);
     }
+  };
+
+  setHandleStopped = (action) => {
+    this.#handleStopped = action;
   };
 
   #typeCheck(elementId, fillSpeed, maxWaterDropCount) {
@@ -309,10 +314,9 @@ class TypeFluid {
     }
 
     if (this.#fluid.baseHeight < 0) {
-      if (this.#isProcessing) {
-        this.#isProcessing = false;
-        this.#textFrame.drawText();
-      }
+      this.#isProcessing = false;
+      this.#textFrame.drawText();
+      this.#handleStopped && this.#handleStopped();
 
       return;
     }
