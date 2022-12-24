@@ -10,7 +10,6 @@ class TextFrame {
     this.#rootStyle = rootStyle;
     this.#text = text;
     this.#alphaValue = alphaValue;
-    this.bottomPos = 0;
   }
 
   getRect = (stageSize) => {
@@ -76,12 +75,13 @@ class TextFrame {
     this.#ctx.clearRect(0, 0, stageSize.width, stageSize.height);
     this.#ctx.restore();
 
-    return {
+    this.rect = {
       x: rect.left,
       y: rect.top,
       width: rect.right - rect.left,
       height: stageSize.height,
     };
+    return this.rect;
   };
 
   getPixelInfosList = (stageSize) => {
@@ -256,7 +256,6 @@ class TextFrame {
     }
 
     const lastTextField = textFields[textFields.length - 1];
-    this.bottomPos = lastTextField.y + lastTextField.height;
 
     return textFields;
   };
