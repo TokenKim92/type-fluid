@@ -21,17 +21,18 @@ export default class TypeFluid extends BaseType {
   #maxWaterDropCount;
 
   constructor(elementId, fillTime = 5, maxWaterDropCount = 3) {
-    super(elementId);
+    super(elementId, 'position');
     this.#typeCheck(fillTime, maxWaterDropCount);
 
     this.#fillTime = fillTime;
     this.#maxWaterDropCount = maxWaterDropCount | 0;
     this.#countToDropWater = fillTime - 1;
+    this.#targetWaveHeight = this.fittedRect.y;
 
     this.#fluid = new Fluid({
       fps: TypeFluid.FPS,
       stageSize: this.canvasSize,
-      startPosY: this.stageRect.height,
+      startPosY: this.fittedRect.y + this.fittedRect.height,
       fillTime: this.#fillTime,
     });
     this.#waterDropEffect = new WaterDropEffect(
@@ -63,24 +64,24 @@ export default class TypeFluid extends BaseType {
   };
 
   onResize = () => {
-    this.#fluid.resize(this.canvasSize, this.stageRect.height);
+    this.#fluid.resize(this.canvasSize, this.fittedRect.height);
     this.#waterDropEffect.resize(this.canvasSize);
     this.#initPixelInfosList(this.canvasSize);
-    this.#targetWaveHeight = this.stageRect.y;
+    this.#targetWaveHeight = this.fittedRect.y;
   };
 
   #initPixelInfosList = (stageSize) => {
     this.#pixelInfosList = this.getPixelInfosList(stageSize);
-    this.#pixelInfosKeys = Object.keys(this.#pixelInfosList.posList).map((x) =>
-      parseInt(x)
+    this.#pixelInfosKeys = Object.keys(this.#pixelInfosList.heightsList).map(
+      (x) => parseInt(x)
     );
 
     this.#resetPixelInfosList();
   };
 
   #resetPixelInfosList = () => {
-    const pixelHeightsList = this.#pixelInfosList.posList;
-    const pixelAlphasList = this.#pixelInfosList.alphaList;
+    const pixelHeightsList = this.#pixelInfosList.heightsList;
+    const pixelAlphasList = this.#pixelInfosList.alphasList;
 
     this.#pixelInfosKeys.forEach((key) => {
       this.#pixelHeightsList[key] = [...pixelHeightsList[key]];

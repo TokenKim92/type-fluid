@@ -27,6 +27,7 @@ export default class BaseType {
   #imageData;
   #isInitialized = false;
   #isProcessing = false;
+  #particleSortMode;
 
   /* Public member as protect*/
   ctx;
@@ -39,7 +40,7 @@ export default class BaseType {
   onDrawFinish = undefined;
   isDrawFinished = undefined;
 
-  constructor(elementId) {
+  constructor(elementId, particleSortMode = 'field') {
     checkType(elementId, primitiveType.string);
 
     this.#elementObj = document.querySelector(`#${elementId}`);
@@ -47,6 +48,7 @@ export default class BaseType {
       throw new Error("This element id doesn't exit.");
     }
 
+    this.#particleSortMode = particleSortMode;
     this.#rootStyle = window.getComputedStyle(this.#elementObj);
     this.#fontRGB = colorToRGB(this.#rootStyle.color);
 
@@ -54,9 +56,12 @@ export default class BaseType {
     this.#createCanvases();
     this.#textFrame = new TextFrame(
       this.ctx,
-      this.#rootStyle,
+      {
+        rootStyle: this.#rootStyle,
+        alphaValue: this.#fontRGB.a,
+      },
       this.#elementObj.innerText,
-      this.#fontRGB.a
+      particleSortMode
     );
 
     this.#resetStage();
@@ -68,8 +73,8 @@ export default class BaseType {
     );
   }
 
-  get stageRect() {
-    return { ...this.#textFrame.rect };
+  get fittedRect() {
+    return { ...this.#textFrame.getFittedRect() };
   }
 
   get rootStyle() {
@@ -92,7 +97,21 @@ export default class BaseType {
   };
 
   getPixelInfosList = (stageSize) => {
-    return this.#textFrame.getPixelInfosList(stageSize);
+    const pixelInfoList = this.#textFrame.getMetrics(stageSize).pixelInfosList;
+    switch (this.#particleSortMode) {
+      case 'position':
+        return {
+          heightsList: pixelInfoList.mainList,
+          alphasList: pixelInfoList.secondList,
+        };
+      case 'field':
+      default:
+        return pixelInfoList.mainList;
+    }
+  };
+
+  getTextFields = (stageSize) => {
+    return this.#textFrame.getMetrics(stageSize).textFields;
   };
 
   drawText = () => {
@@ -198,13 +217,11 @@ export default class BaseType {
 
   #resetStage = () => {
     const clientSize = this.#getClientSize(this.#elementObj);
-    this.#canvas.width = clientSize.width;
-    this.#canvas.height = clientSize.height;
+    const textFrameRect = this.#textFrame.getFittedRect(clientSize);
 
-    const textFrameRect = this.#textFrame.getRect(clientSize);
     this.#canvas.style.left = `${textFrameRect.x}px`;
     this.#canvas.width = textFrameRect.width;
-    this.#canvas.height = textFrameRect.height;
+    this.#canvas.height = clientSize.height;
     this.ctx.fillStyle = this.#rootStyle.color;
 
     this.canvasSize = {
@@ -268,6 +285,7 @@ export default class BaseType {
       this.#backgroundCanvas.style.top = `${margin.top}px`;
     }
 
+    this.#textFrame.resize();
     this.#resetStage();
     this.onResize();
 
