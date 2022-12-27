@@ -30,9 +30,13 @@ class WaterDropEffect {
     this.#waterDrops.forEach((waterDrop) => waterDrop.draw(this.#ctx));
   };
 
-  resize = (stageSize) => {
+  resize = (stageSize, fontSize) => {
     this.#curIndex = 0;
-    this.#waterDrops.forEach((waterDrop) => waterDrop.resize(stageSize));
+
+    const waterDropMinSize = (1 + fontSize / 100) | 0;
+    this.#waterDrops.forEach((waterDrop) =>
+      waterDrop.resize(stageSize, waterDropMinSize)
+    );
   };
 
   drop = () => {

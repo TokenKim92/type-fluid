@@ -70,7 +70,10 @@ export default class TypeFluid extends BaseType {
 
   onResize = () => {
     this.#fluid.resize(this.canvasSize, this.fittedRect.height);
-    this.#waterDropEffect.resize(this.canvasSize);
+    this.#waterDropEffect.resize(
+      this.canvasSize,
+      parseInt(this.rootStyle.fontSize)
+    );
     this.#initPixelInfosList(this.canvasSize);
     this.#targetWaveHeight = this.fittedRect.y;
   };

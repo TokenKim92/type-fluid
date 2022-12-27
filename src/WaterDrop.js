@@ -13,18 +13,18 @@ class WaterDrop {
   #maxSize;
 
   constructor(stageSize, minSize, dropAcceleration) {
-    this.#minSize = minSize;
-    this.#maxSize = minSize + WaterDrop.MAX_SIZE_OFFSET;
     this.#acceleration = dropAcceleration;
     this.#weight = WEIGHT.mild;
     this.#initSpeed = DROP_SPEED[this.#weight];
 
-    this.resize(stageSize);
+    this.resize(stageSize, minSize);
     this.reset();
   }
 
-  resize = (stageSize) => {
+  resize = (stageSize, minSize) => {
     this.#stageSize = stageSize;
+    this.#minSize = minSize;
+    this.#maxSize = minSize + WaterDrop.MAX_SIZE_OFFSET;
   };
 
   update = () => {
