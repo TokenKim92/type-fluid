@@ -1,7 +1,7 @@
 import { checkType, primitiveType } from './utils.js';
 
-import Fluid from './fluid.js';
-import WaterDropEffect from './waterDropEffect.js';
+import Fluid from './Fluid.js';
+import WaterDropEffect from './WaterDropEffect.js';
 import BaseType from './BaseType.js';
 
 export default class TypeFluid extends BaseType {

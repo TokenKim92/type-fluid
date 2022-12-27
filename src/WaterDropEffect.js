@@ -1,4 +1,4 @@
-import WaterDrop from './waterDrop.js';
+import WaterDrop from './WaterDrop.js';
 
 class WaterDropEffect {
   #ctx;

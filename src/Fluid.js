@@ -1,5 +1,5 @@
 import { WEIGHT, HIGH_WAVE_HEIGHT, LOW_WAVE_HEIGHT } from './utils.js';
-import Vertex from './vertex.js';
+import Vertex from './Vertex.js';
 
 class Fluid {
   static MAX_VERTEX_COUNT = 400;
