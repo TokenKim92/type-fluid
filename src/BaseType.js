@@ -97,16 +97,38 @@ export default class BaseType {
   };
 
   getPixelInfosList = (stageSize) => {
-    const pixelInfoList = this.#textFrame.getMetrics(stageSize).pixelInfosList;
+    const pixelInfosList = this.#textFrame.getMetrics(stageSize).pixelInfosList;
+
     switch (this.#particleSortMode) {
       case 'position':
+        const pixelInfosKeys = Object.keys(pixelInfosList.mainList).map((x) =>
+          parseInt(x)
+        );
+        const copiedPixelHeightsList = new Array();
+        const copiedPixelAlphasList = new Array();
+
+        pixelInfosKeys.forEach((key) => {
+          copiedPixelHeightsList[key] = [...pixelInfosList.mainList[key]];
+          copiedPixelAlphasList[key] = [...pixelInfosList.secondList[key]];
+        });
+
         return {
-          heightsList: pixelInfoList.mainList,
-          alphasList: pixelInfoList.secondList,
+          heightsList: copiedPixelHeightsList,
+          alphasList: copiedPixelAlphasList,
         };
+
       case 'field':
       default:
-        return pixelInfoList.mainList;
+        const copiedPixelInfosList = new Array();
+        pixelInfosList.mainList.forEach((pixelInfos, index) => {
+          copiedPixelInfosList.push(new Array());
+
+          pixelInfos.forEach((pixelInfo) => {
+            copiedPixelInfosList[index].push({ ...pixelInfo });
+          });
+        });
+
+        return copiedPixelInfosList;
     }
   };
 
@@ -139,7 +161,7 @@ export default class BaseType {
 
   restart = () => {
     if (!this.#isInitialized) {
-      setTimeout(() => this.start(), TypeFluid.OPACITY_TRANSITION_TIME);
+      setTimeout(() => this.start(), BaseType.OPACITY_TRANSITION_TIME);
 
       return;
     }

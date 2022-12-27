@@ -5,26 +5,29 @@ import WaterDropEffect from './waterDropEffect.js';
 import BaseType from './BaseType.js';
 
 export default class TypeFluid extends BaseType {
-  static INIT_WAVE_HEIGHT = 1;
-  static INIT_RIPPLE_SPEED = 5;
-
   #fillTime;
   #fluid;
   #waterDropEffect;
   #countToDropWater;
   #waterDrops = [];
   #targetWaveHeight;
-  #pixelInfosList;
   #pixelInfosKeys;
   #pixelHeightsList = {};
   #pixelAlphasList = {};
+  #useWaterDropEffect;
   #maxWaterDropCount;
 
-  constructor(elementId, fillTime = 5, maxWaterDropCount = 3) {
+  constructor(
+    elementId,
+    fillTime = 5,
+    useWaterDropEffect = true,
+    maxWaterDropCount = 3
+  ) {
     super(elementId, 'position');
-    this.#typeCheck(fillTime, maxWaterDropCount);
 
+    this.#typeCheck(fillTime, useWaterDropEffect, maxWaterDropCount);
     this.#fillTime = fillTime;
+    this.#useWaterDropEffect = useWaterDropEffect;
     this.#maxWaterDropCount = maxWaterDropCount | 0;
     this.#countToDropWater = fillTime - 1;
     this.#targetWaveHeight = this.fittedRect.y;
@@ -42,11 +45,13 @@ export default class TypeFluid extends BaseType {
       parseInt(this.rootStyle.fontSize),
       this.#maxWaterDropCount
     );
+
     this.#initPixelInfosList(this.canvasSize);
   }
 
-  #typeCheck(fillSpeed, maxWaterDropCount) {
+  #typeCheck(fillSpeed, useWaterDropEffect, maxWaterDropCount) {
     checkType(fillSpeed, primitiveType.number);
+    checkType(useWaterDropEffect, primitiveType.boolean);
     checkType(maxWaterDropCount, primitiveType.number);
 
     if (fillSpeed <= 0) {
@@ -60,7 +65,7 @@ export default class TypeFluid extends BaseType {
 
   onRestart = () => {
     this.#fluid.reset();
-    this.#resetPixelInfosList();
+    this.#initPixelInfosList(this.canvasSize);
   };
 
   onResize = () => {
@@ -71,22 +76,13 @@ export default class TypeFluid extends BaseType {
   };
 
   #initPixelInfosList = (stageSize) => {
-    this.#pixelInfosList = this.getPixelInfosList(stageSize);
-    this.#pixelInfosKeys = Object.keys(this.#pixelInfosList.heightsList).map(
-      (x) => parseInt(x)
+    const pixelInfosList = this.getPixelInfosList(stageSize);
+
+    this.#pixelHeightsList = pixelInfosList.heightsList;
+    this.#pixelAlphasList = pixelInfosList.alphasList;
+    this.#pixelInfosKeys = Object.keys(pixelInfosList.heightsList).map((x) =>
+      parseInt(x)
     );
-
-    this.#resetPixelInfosList();
-  };
-
-  #resetPixelInfosList = () => {
-    const pixelHeightsList = this.#pixelInfosList.heightsList;
-    const pixelAlphasList = this.#pixelInfosList.alphasList;
-
-    this.#pixelInfosKeys.forEach((key) => {
-      this.#pixelHeightsList[key] = [...pixelHeightsList[key]];
-      this.#pixelAlphasList[key] = [...pixelAlphasList[key]];
-    });
   };
 
   onDraw = () => {
@@ -97,7 +93,7 @@ export default class TypeFluid extends BaseType {
     this.#waterDropEffect.update();
 
     this.#drawText();
-    this.#waterDropEffect.draw();
+    this.#useWaterDropEffect && this.#waterDropEffect.draw();
   };
 
   onDrawFinish = () => {
